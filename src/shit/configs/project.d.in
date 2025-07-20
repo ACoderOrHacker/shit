@@ -1,5 +1,8 @@
 module shit.configs.project;
 
+import std.path;
+import shit.helper.paths;
+
 string shitFullVersion = "${VERSION}";
 string shitMajorVersion = "${VERSION_MAJOR}";
 string shitMinorVersion = "${VERSION_MINOR}";
@@ -8,3 +11,7 @@ string shitPlatform = "${plat}";
 string shitArchitecture = "${arch}";
 string shitOs = "${os}";
 string shitMode = "${mode}";
+
+string shitConfigsPath() {
+    return ${CONFIGS_PATH};
+}
