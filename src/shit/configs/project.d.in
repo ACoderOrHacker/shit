@@ -1,0 +1,10 @@
+module shit.configs.project;
+
+string shitFullVersion = "${VERSION}";
+string shitMajorVersion = "${VERSION_MAJOR}";
+string shitMinorVersion = "${VERSION_MINOR}";
+string shitPatchVersion = "${VERSION_ALTER}";
+string shitPlatform = "${plat}";
+string shitArchitecture = "${arch}";
+string shitOs = "${os}";
+string shitMode = "${mode}";
