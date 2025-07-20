@@ -49,3 +49,6 @@ TODO
 
 # Local files
 local/
+
+# Interface files
+include/

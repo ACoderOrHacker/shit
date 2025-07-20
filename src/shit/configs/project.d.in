@@ -13,5 +13,5 @@ string shitOs = "${os}";
 string shitMode = "${mode}";
 
 string shitConfigsPath() {
-    return ${CONFIGS_PATH};
+    return buildPath(dirName(dirName(executablePath())), "etc", "shit");
 }

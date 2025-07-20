@@ -1,0 +1,94 @@
+name: Build
+
+on:
+  push:
+    branches:
+      - master
+    tags:
+      - "v*"
+  pull_request:
+    branches:
+      - master
+  workflow_dispatch:
+  release:
+    types: [published]
+
+jobs:
+  build:
+    name: SHIT Build
+    strategy:
+      matrix:
+        include:
+          - os: windows-latest
+            arch: x64
+          - os: windows-latest
+            arch: x86
+          - os: windows-latest
+            arch: arm64
+          - os: ubuntu-latest
+            arch: x86_64
+          - os: ubuntu-latest
+            arch: arm64
+          - os: ubuntu-latest
+            arch: armv7
+          - os: ubuntu-latest
+            arch: armv7s
+          - os: macos-latest
+            arch: x86_64
+          - os: macos-latest
+            arch: arm64
+      fail-fast: false
+    runs-on: ${{matrix.os}}
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install D compiler
+        uses: dlang-community/setup-dlang@v2
+        with:
+          compiler: dmd-latest
+
+      - name: Install Xmake
+        uses: xmake-io/github-action-setup-xmake@v1
+        with:
+          xmake-version: latest
+
+      - name: Install devtools for ubuntu
+        run: |
+          sudo apt-get update
+          sudo apt-get install devscripts -y
+          sudo apt-get install debhelper -y
+          sudo apt-get install build-essential -y
+        if: matrix.os == 'ubuntu-latest'
+
+      - name: Set Arch
+        run: |
+          xmake config -m release
+          xmake f -a ${{matrix.arch}}
+
+      - name: Build project
+        run: |
+          xmake build
+
+      - name: Package project
+        run: |
+          xmake pack -y -o packages/ -f "nsis,targz,zip,deb,runself"
+    
+      - name: Upload Build Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: artifact-${{matrix.os}}-${{matrix.arch}}
+          path: ./packages
+          overwrite: false
+
+      - name: Create Release and Upload Release Asset
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          body: New Release.
+          draft: true
+          fail_on_unmatched_files: true
+          files: |
+              ./packages/*
