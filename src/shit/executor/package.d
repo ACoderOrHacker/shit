@@ -5,6 +5,15 @@ import std.array;
 import std.process;
 import shit.command;
 
+alias executeCommandType = ExecuteResult function(string[]);
+alias builtinCommandsType = executeCommandType[string];
+
+shared builtinCommandsType builtinCommands;
+
+ref shared(builtinCommandsType) getBuiltinCommands() {
+    return builtinCommands;
+}
+
 class ExecuteError : Exception {
     @safe
     this(string message,
@@ -32,12 +41,8 @@ class ExecuteError : Exception {
 struct ExecuteResult {
 
     @safe
-    this(int exit_code, 
-        File stderr = stderr, 
-        File stdout = stdout) {
+    this(int exit_code) {
         this.exit_code = exit_code;
-        this.stderr = stderr;
-        this.stdout = stdout;
     }
 
     @safe
@@ -45,21 +50,8 @@ struct ExecuteResult {
         return exit_code;
     }
 
-    @safe
-    const(File) getStderr() const {
-        return stderr;
-    }
-
-    @safe
-    const(File) getStdout() const {
-        return stdout;
-    }
-
     int exit_code;
-    File stderr;
-    File stdout;
 }
-
 
 ExecuteResult executeProcess(Command cmd, 
     File err = stderr, File output = stdout) {
@@ -68,14 +60,21 @@ ExecuteResult executeProcess(Command cmd,
 
 
     auto pid = spawnProcess(cmd.command_list, stdin, output, err);
-    auto result = ExecuteResult(pid.wait(), err, output);
+    auto result = ExecuteResult(pid.wait());
     return result;
 }
 
-void executeProcess(string cmd) {
-    executeProcess(Command(cmd));
+ExecuteResult executeProcess(string cmd) {
+    return executeProcess(Command(cmd));
 }
 
-extern(C) int executor() {
-	return 0;
+ExecuteResult executeCommand(string cmd) {
+    Command command = Command(cmd);
+    string program = command.command_list[0];
+
+    if (program in getBuiltinCommands()) {
+        return getBuiltinCommands()[program](command.command_list);
+    }
+
+    return executeProcess(command);
 }

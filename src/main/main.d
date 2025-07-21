@@ -6,6 +6,7 @@ import std.format;
 import std.algorithm : startsWith;
 import shit.helper.paths;
 import shit.helper.title;
+import shit.helper.exit;
 import shit.configs.project;
 import shit.initializer;
 import shit.executor;
@@ -28,19 +29,18 @@ void executeCmdLine(string home) {
     if (command is null || command == "\n")
         return;
 
-    Command cmd = Command(command);
-
     setConsoleTitle(command);
     try {
-        auto result = executeProcess(cmd);
+        auto result = executeCommand(command);
         writefln("shit: exit code %s", result.getExitCode());
     } catch (ExecuteError e) {
+        Command cmd = Command(command);
         writefln("shit: %s: command not found", commandName(cmd));
     }
     setDefaultTitle();
 }
 
-void main() {
+int main() {
     // output information
     writefln("SHIT shell v%s, a powerful and modern terminal", shitFullVersion);
     writefln("On [%s, %s], on %s mode",
@@ -56,7 +56,13 @@ void main() {
 
     setDefaultTitle();
     string home = getHome();
-    while (true) {
-        executeCmdLine(home);
+    try {
+        while (true) {
+            executeCmdLine(home);
+        }
+    } catch (ExitSignal e) {
+        return e.getCode(); // exit
     }
+
+    return 0;
 }
