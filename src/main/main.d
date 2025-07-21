@@ -2,12 +2,18 @@ module shit.main;
 
 import std.file;
 import std.stdio;
+import std.format;
 import std.algorithm : startsWith;
 import shit.helper.paths;
+import shit.helper.title;
 import shit.configs.project;
 import shit.initializer;
 import shit.executor;
 import shit.command;
+
+void setDefaultTitle() {
+    setConsoleTitle(format("SHIT shell v%s", shitFullVersion));
+}
 
 void executeCmdLine(string home) {
     string path = getcwd();
@@ -24,12 +30,14 @@ void executeCmdLine(string home) {
 
     Command cmd = Command(command);
 
+    setConsoleTitle(command);
     try {
         auto result = executeProcess(cmd);
         writefln("shit: exit code %s", result.getExitCode());
     } catch (ExecuteError e) {
         writefln("shit: %s: command not found", commandName(cmd));
     }
+    setDefaultTitle();
 }
 
 void main() {
@@ -46,6 +54,7 @@ void main() {
         writefln("shit: startup error(bad configures): %s", e.msg);
     }
 
+    setDefaultTitle();
     string home = getHome();
     while (true) {
         executeCmdLine(home);
