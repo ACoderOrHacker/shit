@@ -68,13 +68,18 @@ jobs:
           xmake config -m release -y
           xmake f -a ${{matrix.arch}} -y
 
+      - name: update
+        run: |
+          xrepo update-repo
+          xrepo list-repo
+
       - name: Build project
         run: |
-          xmake build -y
+          xmake build -y -v
 
       - name: Package project
         run: |
-          xmake pack -y -o packages/ -f "nsis,targz,zip,deb,runself" --autobuild=n
+          xmake pack -y -o packages/ -f "nsis,targz,zip,deb,runself" --autobuild=n -v
     
       - name: Upload Build Artifact
         uses: actions/upload-artifact@v4
