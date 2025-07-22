@@ -57,10 +57,12 @@ jobs:
 
       - name: Install devtools for ubuntu
         run: |
+          sudo add-apt-repository ppa:xmake-io/xmake
           sudo apt-get update
           sudo apt-get install devscripts -y
           sudo apt-get install debhelper -y
           sudo apt-get install build-essential -y
+          sudo apt install xmake -y
         if: matrix.os == 'ubuntu-latest'
 
       - name: Set Arch
