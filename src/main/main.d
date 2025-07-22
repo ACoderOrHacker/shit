@@ -30,13 +30,15 @@ void executeCmdLine(ref GlobalConfig config, string home) {
         return;
 
     setConsoleTitle(command);
+	Command cmd = Command(command);
     try {
-        auto result = executeCommand(config, command);
+        auto result = executeCommand(config, cmd);
         if (config.showExitCode) writefln("shit: exit code %s", result.getExitCode());
     } catch (ExecuteException e) {
-        Command cmd = Command(command);
         writefln("shit: %s: command not found", commandName(cmd));
-    }
+    } catch (RegisteredCommandNotFoundException e) {
+		writefln("shit: %s: registered command not found", commandName(cmd));
+	}
     setDefaultTitle();
 }
 

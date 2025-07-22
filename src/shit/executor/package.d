@@ -39,6 +39,12 @@ class ExecuteException : Exception {
     File stdout;
 }
 
+class RegisteredCommandNotFoundException : Exception {
+	this(string msg) {
+		super(msg);
+	}
+}
+
 struct ExecuteResult {
 
     @safe
@@ -60,7 +66,7 @@ ExecuteResult executeProcess(Command cmd,
         err, output);
 
 
-    auto pid = spawnProcess(cmd.command_list, stdin, output, err);
+    auto pid = spawnProcess(cmd.commandList, stdin, output, err);
     auto result = ExecuteResult(pid.wait());
     return result;
 }
@@ -69,13 +75,23 @@ ExecuteResult executeProcess(string cmd) {
     return executeProcess(Command(cmd));
 }
 
-ExecuteResult executeCommand(ref GlobalConfig config, string cmd) {
-    Command command = Command(cmd);
-    string program = command.command_list[0];
+ExecuteResult executeCommand(ref GlobalConfig config, Command command) {
+    string program = command.commandList[0];
 
-    if (program in getBuiltinCommands()) {
-        return getBuiltinCommands()[program](config, command.command_list);
-    }
-
-    return executeProcess(command);
+	if (command.type == CommandType.System) {
+		return executeProcess(command);
+	} else if (command.type == CommandType.NonSystem) {
+		if (program in getBuiltinCommands()) {
+			return getBuiltinCommands()[program](config, command.commandList);
+		} else {
+			throw new RegisteredCommandNotFoundException("command " ~ program ~ "not found");
+		}
+    } else {
+		// Auto type
+		if (program in getBuiltinCommands()) {
+			return getBuiltinCommands()[program](config, command.commandList);
+		} else {
+			return executeProcess(command);
+		}
+	}
 }
