@@ -1,13 +1,16 @@
 module shit.main;
 
 import std.file;
+import std.path;
 import std.stdio;
 import std.format;
-import std.algorithm : startsWith;
+import std.algorithm : startsWith, endsWith;
 import shit.helper.paths;
 import shit.helper.title;
 import shit.helper.exit;
+import shit.helper.string;
 import shit.configs.project;
+import shit.configs.global;
 import shit.initializer;
 import shit.executor;
 import shit.command;
@@ -16,12 +19,9 @@ void setDefaultTitle() {
     setConsoleTitle(format("SHIT shell v%s", shitFullVersion));
 }
 
-void executeCmdLine(string home) {
+void executeCmdLine(ref GlobalConfig config, string home) {
     string path = getcwd();
-    if (path.startsWith(home)) {
-        path = path[home.length .. $];
-        if (path == "") path = "~"; // root
-    }
+    path = replaceFirst(path, home, "~");
     writef("%s $ ", path);
 
     // Read command from stdin
@@ -31,9 +31,9 @@ void executeCmdLine(string home) {
 
     setConsoleTitle(command);
     try {
-        auto result = executeCommand(command);
-        writefln("shit: exit code %s", result.getExitCode());
-    } catch (ExecuteError e) {
+        auto result = executeCommand(config, command);
+        if (config.showExitCode) writefln("shit: exit code %s", result.getExitCode());
+    } catch (ExecuteException e) {
         Command cmd = Command(command);
         writefln("shit: %s: command not found", commandName(cmd));
     }
@@ -48,17 +48,32 @@ int main() {
     writeln("Copyright (C) 2025, ACoderOrHacker");
     writeln();
 
+    GlobalConfig globalConfig;
+    string home = getHome();
+    if (home.endsWith(dirSeparator)) {
+        home = home[0 .. $ - dirSeparator.length]; // split dir separator
+    }
     try {
-        startUp();
+        globalConfig = getGlobalConfig();
+        startUp(globalConfig);
+    } catch (BadGlobalConfigException e) {
+        writefln("shit: startup error(bad global configures): %s", e.msg);
+        globalConfig.showExitCode = false;
+        globalConfig.defaultPath = home;
+    } catch (GlobalConfigNotFoundException e) {
+        writefln("shit: warning: global configures not found: %s", e.msg);
+        globalConfig.showExitCode = false;
+        globalConfig.defaultPath = home;
     } catch (StartUpException e) {
         writefln("shit: startup error(bad configures): %s", e.msg);
+        globalConfig.showExitCode = false;
+        globalConfig.defaultPath = home;
     }
-
+    
     setDefaultTitle();
-    string home = getHome();
     try {
         while (true) {
-            executeCmdLine(home);
+            executeCmdLine(globalConfig, home);
         }
     } catch (ExitSignal e) {
         return e.getCode(); // exit

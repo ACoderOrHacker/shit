@@ -2,13 +2,13 @@ module shit.helper.paths;
 
 import std.conv;
 
-class ExecutableNotFoundError : Exception {
+class ExecutableNotFoundException : Exception {
     pure nothrow this(string msg) {
         super(msg);
     }
 }
 
-class HomeNotFoundError : Exception {
+class HomeNotFoundException : Exception {
     pure nothrow this(string msg) {
         super(msg);
     }
@@ -26,7 +26,7 @@ version (Posix) {
     string executablePath() {
         char[1024] buffer;
         ssize_t len = readlink("/proc/self/exe", buffer.ptr, buffer.sizeof);
-        if (len == -1) throw new ExecutableNotFoundError("Executable not found");
+        if (len == -1) throw new ExecutableNotFoundException("Executable not found");
         return buffer[0..len].to!string;
     }
 }
@@ -41,13 +41,13 @@ version (Windows) {
         if (SHGetFolderPathW(null, CSIDL_PROFILE, null, 0, path.ptr) == 0) {
             return path[0 .. wcslen(path.ptr)].to!string;
         }
-        throw new HomeNotFoundError("Home directory not found");
+        throw new HomeNotFoundException("Home directory not found");
     }
 
     string executablePath() {
         wchar_t[1024] buffer;
         auto len = GetModuleFileNameW(null, buffer.ptr, buffer.sizeof);
-        if (len == 0) throw new ExecutableNotFoundError("Executable not found");
+        if (len == 0) throw new ExecutableNotFoundException("Executable not found");
         return buffer[0..len].to!string;
     }
 }

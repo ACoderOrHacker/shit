@@ -4,8 +4,9 @@ import std.stdio;
 import std.array;
 import std.process;
 import shit.command;
+import shit.configs.global;
 
-alias executeCommandType = ExecuteResult function(string[]);
+alias executeCommandType = ExecuteResult function(ref GlobalConfig, string[]);
 alias builtinCommandsType = executeCommandType[string];
 
 shared builtinCommandsType builtinCommands;
@@ -14,7 +15,7 @@ ref shared(builtinCommandsType) getBuiltinCommands() {
     return builtinCommands;
 }
 
-class ExecuteError : Exception {
+class ExecuteException : Exception {
     @safe
     this(string message,
         File stderr = stderr, 
@@ -55,7 +56,7 @@ struct ExecuteResult {
 
 ExecuteResult executeProcess(Command cmd, 
     File err = stderr, File output = stdout) {
-    scope(failure) throw new ExecuteError("failed from executeProcess",
+    scope(failure) throw new ExecuteException("failed from executeProcess",
         err, output);
 
 
@@ -68,12 +69,12 @@ ExecuteResult executeProcess(string cmd) {
     return executeProcess(Command(cmd));
 }
 
-ExecuteResult executeCommand(string cmd) {
+ExecuteResult executeCommand(ref GlobalConfig config, string cmd) {
     Command command = Command(cmd);
     string program = command.command_list[0];
 
     if (program in getBuiltinCommands()) {
-        return getBuiltinCommands()[program](command.command_list);
+        return getBuiltinCommands()[program](config, command.command_list);
     }
 
     return executeProcess(command);

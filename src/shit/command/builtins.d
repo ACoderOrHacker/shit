@@ -4,9 +4,10 @@ import std.file : chdir;
 import std.stdio;
 import std.conv;
 import shit.executor;
+import shit.configs.global;
 import shit.helper.exit;
 
-ExecuteResult builtinCd(string[] args) {
+ExecuteResult builtinCd(ref GlobalConfig config, string[] args) {
     scope(failure) {
         writefln("cd: %s: No such file or directory", args[1]);
         return ExecuteResult(1);
@@ -20,7 +21,7 @@ ExecuteResult builtinCd(string[] args) {
     return ExecuteResult(0);
 }
 
-ExecuteResult builtinExit(string[] args) {
+ExecuteResult builtinExit(ref GlobalConfig config, string[] args) {
     if (args.length == 2) {
         exit(args[1].to!int);
     } else {

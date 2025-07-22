@@ -1,7 +1,7 @@
 module shit.initializer;
 
-import std.file : chdir;
-import shit.configs.startup;
+import std.file : chdir, FileException;
+import shit.configs.global : GlobalConfig;
 
 class StartUpException : Exception {
     this(string msg) {
@@ -9,12 +9,10 @@ class StartUpException : Exception {
     }
 }
 
-void startUp() {
+void startUp(ref GlobalConfig config) {
     try {
-        StartupConfig config = getStartupConfig();
-
         chdir(config.defaultPath);
-    } catch (Exception e) {
-        throw new StartUpException("Failed to load startup config: " ~ e.msg);
+    } catch (FileException e) {
+        throw new StartUpException("Failed to change default path to: " ~ e.msg);
     }
 }
