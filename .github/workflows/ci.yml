@@ -65,16 +65,16 @@ jobs:
 
       - name: Set Arch
         run: |
-          xmake config -m release
-          xmake f -a ${{matrix.arch}}
+          xmake config -m release -y
+          xmake f -a ${{matrix.arch}} -y
 
       - name: Build project
         run: |
-          xmake build
+          xmake build -y
 
       - name: Package project
         run: |
-          xmake pack -y -o packages/ -f "nsis,targz,zip,deb,runself"
+          xmake pack -y -o packages/ -f "nsis,targz,zip,deb,runself" --autobuild=n
     
       - name: Upload Build Artifact
         uses: actions/upload-artifact@v4
