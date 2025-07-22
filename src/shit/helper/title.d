@@ -16,8 +16,4 @@ void setConsoleTitle(string title)
         printf("\033]0;%s\007", title.ptr);
         fflush(stdout);
     }
-    else
-    {
-        static assert(false, "Unsupported platform");
-    }
 }
