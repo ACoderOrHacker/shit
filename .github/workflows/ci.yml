@@ -79,7 +79,7 @@ jobs:
 
       - name: Package project
         run: |
-          xmake pack -y -o packages/ -f "nsis,targz,zip,deb,runself" --autobuild=n -v
+          xmake pack -y -o packages/ -f "nsis,targz,zip,runself" --autobuild=n -v
     
       - name: Upload Build Artifact
         uses: actions/upload-artifact@v4
