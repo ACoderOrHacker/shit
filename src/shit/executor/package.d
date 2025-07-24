@@ -71,10 +71,6 @@ ExecuteResult executeProcess(Command cmd,
     return result;
 }
 
-ExecuteResult executeProcess(string cmd) {
-    return executeProcess(Command(cmd));
-}
-
 ExecuteResult executeCommand(ref GlobalConfig config, Command command) {
     string program = command.commandList[0];
 

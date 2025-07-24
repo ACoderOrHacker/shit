@@ -20,6 +20,8 @@ void setDefaultTitle() {
 }
 
 void executeCmdLine(ref GlobalConfig config, string home) {
+    scope(exit) setDefaultTitle();
+
     string path = getcwd();
     path = replaceFirst(path, home, "~");
     writef("%s $ ", path);
@@ -28,9 +30,17 @@ void executeCmdLine(ref GlobalConfig config, string home) {
     string command = stdin.readln();
     if (command is null || command == "\n")
         return;
+		
+	command = command[0 .. $ - 1]; // split \n
 
     setConsoleTitle(command);
-	Command cmd = Command(command);
+	Command cmd;
+    try {
+        cmd = Command(command);
+    } catch (ParseError) {
+        writefln("shit: %s: parse error", command);
+        return;
+    }
     try {
         auto result = executeCommand(config, cmd);
         if (config.showExitCode) writefln("shit: exit code %s", result.getExitCode());
@@ -39,7 +49,6 @@ void executeCmdLine(ref GlobalConfig config, string home) {
     } catch (RegisteredCommandNotFoundException e) {
 		writefln("shit: %s: registered command not found", commandName(cmd));
 	}
-    setDefaultTitle();
 }
 
 int main() {

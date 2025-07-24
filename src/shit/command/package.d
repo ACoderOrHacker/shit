@@ -1,6 +1,7 @@
 module shit.command;
 
 import std.array;
+public import shit.command.parser;
 
 enum
 	SystemCommandStartsWith = '%',
@@ -13,8 +14,7 @@ enum CommandType {
 }
 
 struct Command {
-    @safe
-    pure nothrow this(string fullCommand) {
+    this(string fullCommand) {
         this.full = fullCommand;
         this.commandList = splitCommand(fullCommand);
 		char startsOfCommandName = commandName(this)[0];
@@ -45,10 +45,4 @@ pure nothrow string commandName(ref Command cmd) {
 extern (C)
 pure nothrow string[] commandArgs(ref Command cmd) {
     return cmd.commandList.length > 1 ? cmd.commandList[1..$] : [];
-}
-
-@safe
-extern (C)
-private pure nothrow string[] splitCommand(string fullCommand) {
-    return fullCommand.replace("\n", "").split(" ");
 }

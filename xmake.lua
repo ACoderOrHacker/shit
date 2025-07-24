@@ -29,6 +29,8 @@ xpack("shit")
     set_licensefile("LICENSE")
     set_title("The SHIT terminal")
 
+    set_iconfile("res/logo.png")
+
     set_formats("zip", "targz", "nsis", "runself")
 
     set_basename("shit-$(version)-$(plat)-$(arch)")
