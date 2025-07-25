@@ -6,6 +6,8 @@ import std.path;
 import std.conv : to;
 import shit.configs.project;
 import shit.helper.paths;
+public import shit.configs.basic;
+public import shit.configs.project;
 
 class GlobalConfigNotFoundException : Exception {
     pure nothrow this(string msg) {
@@ -29,8 +31,7 @@ GlobalConfig getGlobalConfig() {
     JSONValue value;
 
     try {
-        string jsonString = cast(string) read(buildPath(shitConfigsPath(), "global.json"));
-        value = parseJSON(jsonString);
+        value = readJSON(buildPath(shitConfigsPath(), "global.json"));
     } catch (Exception e) {
         throw new GlobalConfigNotFoundException("Unable to read global configuration file");
     }
@@ -50,10 +51,10 @@ GlobalConfig getGlobalConfig() {
 
     try {
         JSONValue jShowExitCode = value["showExitCode"];
-        if (jShowExitCode.type == JSONType.true_ || jShowExitCode.type == JSONType.false_) {
-            config.showExitCode = jShowExitCode.boolean;
+        if (jShowExitCode.type == JSONType.string) {
+            config.showExitCode = jShowExitCode.str == "true" ? true : false;
         } else {
-            throw new BadGlobalConfigException("showExitCode is not a boolean");
+            throw new BadGlobalConfigException("showExitCode is not a string");
         }
     } catch (JSONException e) {
         throw new GlobalConfigNotFoundException("Unable to read showExitCode from global configuration file");

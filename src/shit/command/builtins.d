@@ -1,11 +1,15 @@
 module shit.command.builtins;
 
-import std.file : chdir;
+import std.file : chdir, read, FileException;
+import std.path;
 import std.stdio;
 import std.conv;
+import std.getopt;
+import std.json;
 import shit.executor;
 import shit.configs.global;
 import shit.helper.exit;
+import shit.helper.paths;
 
 ExecuteResult builtinCd(ref GlobalConfig config, string[] args) {
     scope(failure) {
@@ -31,7 +35,78 @@ ExecuteResult builtinExit(ref GlobalConfig config, string[] args) {
     return ExecuteResult(0);
 }
 
+ExecuteResult builtinEcho(ref GlobalConfig config, string[] args) {
+    foreach (str; args[1 .. $])
+        write(str);
+    writeln();
+
+    return ExecuteResult(0);
+}
+
+ExecuteResult builtinReload(ref GlobalConfig config, string[] args) {
+    if (args.length != 1)
+        return ExecuteResult(1);
+
+    string home = getHome();
+    try {
+        config = getGlobalConfig();
+    } catch (BadGlobalConfigException e) {
+        writefln("shit: startup error(bad global configures): %s", e.msg);
+        config.showExitCode = false;
+        config.defaultPath = home;
+    } catch (GlobalConfigNotFoundException e) {
+        writefln("shit: warning: global configures not found: %s", e.msg);
+        config.showExitCode = false;
+        config.defaultPath = home;
+    }
+
+    return ExecuteResult(0);
+}
+
+ExecuteResult builtinConfig(ref GlobalConfig config, string[] args) {
+    string key, value, cfg;
+    try {
+        auto help = getopt(
+            args,
+            std.getopt.config.bundling,
+            std.getopt.config.required,
+            "config|c", "The configure name (such as `global`)", &cfg,
+            std.getopt.config.required,
+            "key|k", "The key of the configures", &key,
+            std.getopt.config.required,
+            "value|v", "The value of the configures", &value
+        );
+
+        if (help.helpWanted) {
+            defaultGetoptPrinter("The SHIT terminal configure tool", help.options);
+            return ExecuteResult(0);
+        }
+
+        string path = buildPath(shitConfigsPath(), cfg ~ ".json");
+        JSONValue jVal = readJSON(path);
+
+        jVal[key] = value;
+        writeJSON(path, jVal, true);
+        return ExecuteResult(0);
+    } catch (GetOptException e) {
+        writefln("shit: %s", e.msg);
+        return ExecuteResult(1);
+    } catch (JSONException e) {
+        writeln("shit: invalid json configure");
+        return ExecuteResult(1);
+    } catch (FileException e) {
+        writefln("shit: no configure found: %s", cfg);
+    } catch (SafeWriteException e) {
+        writeln("shit: failed to write configure: %s", e.msg);
+    }
+
+    return ExecuteResult(1);
+}
+
 static this() {
     getBuiltinCommands()["cd"] = &builtinCd;
     getBuiltinCommands()["exit"] = &builtinExit;
+    getBuiltinCommands()["echo"] = &builtinEcho;
+    getBuiltinCommands()["reload"] = &builtinReload;
+    getBuiltinCommands()["config"] = &builtinConfig;
 }
