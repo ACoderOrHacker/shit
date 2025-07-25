@@ -15,6 +15,13 @@ ref shared(builtinCommandsType) getBuiltinCommands() {
     return builtinCommands;
 }
 
+class Registry {
+    Registry register(string name, executeCommandType command) {
+        getBuiltinCommands()[name] = command;
+        return this;
+    }
+}
+
 class ExecuteException : Exception {
     @safe
     this(string message,

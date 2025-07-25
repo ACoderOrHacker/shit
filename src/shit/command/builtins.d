@@ -5,21 +5,23 @@ import std.path;
 import std.stdio;
 import std.conv;
 import std.getopt;
+import std.format;
 import std.json;
 import shit.executor;
 import shit.configs.global;
 import shit.helper.exit;
 import shit.helper.paths;
+import shit.helper.logger;
 
 ExecuteResult builtinCd(ref GlobalConfig config, string[] args) {
     scope(failure) {
-        writefln("cd: %s: No such file or directory", args[1]);
+        log(format("cd: %s: No such file or directory", args[1]));
         return ExecuteResult(1);
     }
     if (args.length == 2) {
         chdir(args[1]);
     } else {
-        writeln("Usage: cd <directory>");
+        log("Usage: cd <directory>");
     }
 
     return ExecuteResult(0);
@@ -51,11 +53,11 @@ ExecuteResult builtinReload(ref GlobalConfig config, string[] args) {
     try {
         config = getGlobalConfig();
     } catch (BadGlobalConfigException e) {
-        writefln("shit: startup error(bad global configures): %s", e.msg);
+        log("startup error(bad global configures): " ~ e.msg);
         config.showExitCode = false;
         config.defaultPath = home;
     } catch (GlobalConfigNotFoundException e) {
-        writefln("shit: warning: global configures not found: %s", e.msg);
+        log("global configures not found: " ~ e.msg);
         config.showExitCode = false;
         config.defaultPath = home;
     }
@@ -89,24 +91,25 @@ ExecuteResult builtinConfig(ref GlobalConfig config, string[] args) {
         writeJSON(path, jVal, true);
         return ExecuteResult(0);
     } catch (GetOptException e) {
-        writefln("shit: %s", e.msg);
+        log(e.msg);
         return ExecuteResult(1);
     } catch (JSONException e) {
-        writeln("shit: invalid json configure");
+        log("invalid configure: " ~ e.msg);
         return ExecuteResult(1);
     } catch (FileException e) {
-        writefln("shit: no configure found: %s", cfg);
+        log("no configure found: " ~ cfg);
     } catch (SafeWriteException e) {
-        writeln("shit: failed to write configure: %s", e.msg);
+        log("failed to write configure: " ~ e.msg);
     }
 
     return ExecuteResult(1);
 }
 
 static this() {
-    getBuiltinCommands()["cd"] = &builtinCd;
-    getBuiltinCommands()["exit"] = &builtinExit;
-    getBuiltinCommands()["echo"] = &builtinEcho;
-    getBuiltinCommands()["reload"] = &builtinReload;
-    getBuiltinCommands()["config"] = &builtinConfig;
+    new Registry()
+        .register("cd", &builtinCd)
+        .register("exit", &builtinExit)
+        .register("echo", &builtinEcho)
+        .register("reload", &builtinReload)
+        .register("config", &builtinConfig);
 }

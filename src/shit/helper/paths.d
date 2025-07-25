@@ -1,6 +1,7 @@
 module shit.helper.paths;
 
 import std.conv;
+import std.path : buildPath, dirName;
 
 class ExecutableNotFoundException : Exception {
     pure nothrow this(string msg) {
