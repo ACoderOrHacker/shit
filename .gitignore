@@ -14,12 +14,6 @@
 # Executables
 *.exe
 
-# DUB
-.dub
-docs.json
-__dummy.html
-docs/
-
 # Code coverage
 *.lst
 
@@ -35,3 +29,7 @@ build/
 
 # TODO file
 TODO
+
+node_modules/
+docs/.vitepress/cache
+docs/.vitepress/dist
