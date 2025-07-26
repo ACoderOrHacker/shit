@@ -15,5 +15,5 @@ git add -A
 git commit -m 'deploy docs'
 git branch -m master main
 
-git push -f https://github.com/ACoderOrHacker/pinwin.git main:docs
+git push -f https://github.com/ACoderOrHacker/shit.git main:docs
 cd -
