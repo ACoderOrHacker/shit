@@ -29,7 +29,7 @@ xpack("shit")
     set_licensefile("LICENSE")
     set_title("The SHIT terminal")
 
-    set_iconfile("res/logo.png")
+    set_iconfile("res/logo.ico")
 
     set_formats("zip", "targz", "nsis", "runself")
 
