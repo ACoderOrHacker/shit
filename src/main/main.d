@@ -21,8 +21,16 @@ void executeCmdLine(ref GlobalConfig config, string home) {
     scope(exit) setDefaultTitle();
 
     string path = getcwd();
-    path = replaceFirst(path, home, "~");
-    writef("%s $ ", path);
+    string showPath = replaceFirst(path, home, "~");
+    string gitBranch;
+    try {
+        gitBranch = new GitData(config.gitDir, path).currentBranch;
+    } catch (GitRepoNotFoundException) {
+        gitBranch = null;
+    }
+    
+    writeln(showPath ~ (gitBranch == null ? "" : " (" ~ gitBranch ~ ")"));
+    write("$ ");
 
     // Read command from stdin
     string command = stdin.readln();
@@ -87,6 +95,7 @@ int main() {
     try {
         while (true) {
             executeCmdLine(globalConfig, home);
+            writeln();
         }
     } catch (ExitSignal e) {
         return e.getCode(); // exit
