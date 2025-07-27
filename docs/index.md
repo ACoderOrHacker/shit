@@ -20,7 +20,7 @@ features:
   - title: Cross-platform
     details: Can run on Windows, Linux, and MacOS.
   - title: Powerful
-    details: Run with many built-in commands, linux shell and bat shell for future.
+    details: Run with many built-in commands, support git information, linux shell and bat shell for future.
   - title: Easy
     details: Same as linux shell, easy to know and write shit commands.
 
