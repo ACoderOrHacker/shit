@@ -6,18 +6,18 @@ import std.process : environment;
 
 string getUserName() {
     version (Windows) {
-        string user = environment.get("USERNAME", "");
-    } else  {
-        string user = environment.get("USER", "");
+        string user = environment.get("USERNAME", "user");
+    } else {
+        string user = environment.get("USER", "user");
     }
-    return user is null ? "user" : user;
+    return user;
 }
 
 string getHostName() {
     version (Windows) {
-        string host = environment.get("USERDOMAIN", "");
+        string host = environment.get("USERDOMAIN", "localhost");
     } else {
-        string host = environment.get("HOSTNAME", "");
+        string host = environment.get("HOSTNAME", "localhost");
     }
-    return host is null ? "localhost" : host;
+    return host;
 }
