@@ -6,6 +6,7 @@ import std.stdio;
 import std.format : format;
 import std.conv : to;
 import std.algorithm : startsWith, endsWith;
+import colored;
 import shit.helper;
 import shit.configs.project;
 import shit.configs.global;
@@ -28,15 +29,17 @@ void executeCmdLine(ref GlobalConfig config, string home) {
     } catch (GitRepoNotFoundException) {
         gitBranch = null;
     }
-    
-    writeln(showPath ~ (gitBranch == null ? "" : " (" ~ gitBranch ~ ")"));
+    (getUserName() ~ "@" ~ getHostName() ~ " ").green.write;
+    write(showPath);
+    string branchInfo = gitBranch == null ? "" : " (" ~ gitBranch ~ ")";
+    branchInfo.yellow.writeln;
     write("$ ");
 
     // Read command from stdin
     string command = stdin.readln();
     if (command is null || command == "\n")
         return;
-		
+
 	command = command[0 .. $ - 1]; // split \n
 
     setConsoleTitle(command);
