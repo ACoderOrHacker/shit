@@ -24,6 +24,9 @@ local/
 .xmake/
 build/
 
+# Configure file
+src/shit/configs/project.d
+
 # Vscode project files
 .vscode/
 

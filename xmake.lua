@@ -14,14 +14,30 @@ add_installfiles("etc/shit/*.json", {prefixdir = "etc/shit"})
 set_configdir("src/shit/configs")
 add_configfiles("src/shit/configs/project.d.in")
 
+add_requires("luajit")
 add_requires("dub::colored", {alias = "colored"})
 
 add_includedirs("src")
 
+option("unittests")
+    set_default(false)
+
+    add_dcflags("-unittest", {tools = "dmd"})
+option_end()
+
+target("conbase")
+    set_kind("shared")
+
+    add_options("unittests")
+    add_files("src/shit/**.d")
+    add_packages("luajit")
+target_end()
+
 target("shit")
     set_kind("binary")
 
-    add_files("src/**.d")
+    add_files("src/main/**.d")
+    add_deps("conbase")
     add_packages("colored")
 target_end()
 
@@ -40,6 +56,7 @@ xpack("shit")
 
     add_installfiles("LICENSE")
     add_installfiles("README.md")
+    add_installfiles("NOTICE.md")
 
     add_sourcefiles("src/(**.d)")
     add_sourcefiles(".github/(**.yml)")

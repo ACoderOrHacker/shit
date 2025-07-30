@@ -61,6 +61,11 @@ void executeCmdLine(ref GlobalConfig config, string home) {
 }
 
 int main() {
+    scope(failure) {
+        internalError("unknown error"); // we didn't know what happens
+        return 1;
+    }
+
     // output information
     writefln("SHIT shell v%s, a powerful and modern terminal", shitFullVersion);
     writefln("On [%s, %s], on %s mode",
@@ -92,8 +97,16 @@ int main() {
     if (isDefault) {
         globalConfig.showExitCode = false;
         globalConfig.defaultPath = home;
+        try {
+            startUp(globalConfig);
+        } catch (StartUpException e) {
+            // that is the default configuration,
+            // if it fails, then maybe the getHome or anyelse gets bad works
+            internalError(e.msg);
+            return 1;
+        }
     }
-    
+
     setDefaultTitle();
     try {
         while (true) {

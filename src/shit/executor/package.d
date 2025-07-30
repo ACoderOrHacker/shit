@@ -6,7 +6,8 @@ import std.process;
 import shit.command;
 import shit.configs.global;
 
-alias executeCommandType = ExecuteResult function(ref GlobalConfig, string[]);
+alias executeCommandType = ExecuteResult delegate(ref GlobalConfig, string[]);
+alias executeCommandFunctionType = ExecuteResult function(ref GlobalConfig, string[]);
 alias builtinCommandsType = executeCommandType[string];
 
 shared builtinCommandsType builtinCommands;
@@ -20,6 +21,28 @@ class Registry {
         getBuiltinCommands()[name] = command;
         return this;
     }
+
+    Registry register(string name, executeCommandFunctionType command) {
+        import std.functional : toDelegate;
+        getBuiltinCommands()[name] = toDelegate(command);
+        return this;
+    }
+}
+
+@("registry") unittest {
+    assert(&getBuiltinCommands() == &builtinCommands);
+    auto r = new Registry;
+
+    ExecuteResult t(ref GlobalConfig, string[]) {
+        return ExecuteResult(0);
+    }
+    r.register("test1", &t);
+    r.register("test2", &t);
+
+    auto c = getBuiltinCommands();
+
+    assert("test1" in c, "Failed write `test1` to registry");
+    assert("test2" in c, "Failed write `test2` to registry");
 }
 
 class ExecuteException : Exception {

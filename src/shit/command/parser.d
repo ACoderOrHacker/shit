@@ -138,3 +138,31 @@ string[] splitCommand(string s) {
 done:
     return words;
 }
+
+@("parse") unittest {
+    import std.conv : to;
+
+    void check(string cmd, string[] expected) {
+        auto result = splitCommand(cmd);
+        assert(result == expected, 
+            `Failed: splitCommand("` ~ cmd ~ `")` ~ 
+            `\n  Expected: ` ~ expected.to!string ~ 
+            `\n  Got:      ` ~ result.to!string);
+    }
+
+    check("ls -l /home/user", ["ls", "-l", "/home/user"]);
+    check("echo 'Hello D World'", ["echo", "Hello D World"]);
+    check(`gcc -DNAME="D Programming" main.d`, ["gcc", "-DNAME=D Programming", "main.d"]);
+    check(`cp --message='Backup "important" files' src dest`, 
+        ["cp", "--message=Backup \"important\" files", "src", "dest"]);
+    check(r"rm file\ with\ spaces.log", ["rm", "file with spaces.log"]);
+    check(`ssh host 'ls -l "My Documents"'`, ["ssh", "host", `ls -l "My Documents"`]);
+    check("touch '' \"\"", ["touch", "", ""]);
+    check(`echo test\\`, ["echo", "test\\"]);
+    check(`git commit -m 'Fix: Parse "quoted\\ strings" correctly'`,
+        ["git", "commit", "-m", `Fix: Parse "quoted\\ strings" correctly`]);
+
+    auto cmd = `echo "unclosed quote`;
+    assertThrown!ParseError(splitCommand(cmd), 
+        "Unclosed quote should throw ParseError");
+}
