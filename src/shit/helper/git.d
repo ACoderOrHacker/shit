@@ -14,13 +14,17 @@ class GitRepoNotFoundException : Exception {
 }
 
 class GitData {
-    this(string gitPath, string path) {
+    this(string gitPath, string path, bool recursion = false) {
+        string pathTemp = gitPathGet(path, recursion);
+        if (pathTemp is null)
+            throw new GitRepoNotFoundException(path);
+
         this.gitPath_ = gitPath;
-        this.path_ = path;
-        this.gitRepoPath_ = buildPath(path, ".git");
+        this.path_ = pathTemp;
+        this.gitRepoPath_ = buildPath(pathTemp, ".git");
 
         if (!exists(this.gitRepoPath_))
-            throw new GitRepoNotFoundException(path);
+            throw new GitRepoNotFoundException(this.gitRepoPath_);
     }
 
     @property
@@ -41,14 +45,41 @@ class GitData {
 
     @property
     string currentBranch() {
-        scope(failure) return null;
-        string fullCommand = format("%s --git-dir=%s branch --no-color", gitPath, buildPath(path, ".git"));
-        auto result = executeShell(fullCommand);
-        if (result.status != 0) return null;
-        return result.output[2 .. $ - 1];
+        try {
+            string fullCommand = format("%s --git-dir=%s branch --no-color", gitPath, buildPath(path, ".git"));
+            auto result = executeShell(fullCommand);
+            if (result.status != 0) return null;
+            return result.output[2 .. $ - 1];
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     private string path_;
     private string gitPath_;
     private string gitRepoPath_;
+}
+
+private string gitPathGet(string path, bool recursion) {
+    if (!recursion) {
+        if (!exists(path)) return path;
+        return null;
+    }
+
+    string currentDir = absolutePath(path);
+    do {
+        string gitPath = buildPath(currentDir, ".git");
+
+        if (exists(gitPath))
+            return currentDir;
+        
+        string parentDir = dirName(currentDir);
+
+        if (parentDir == currentDir)
+            break;
+
+        currentDir = parentDir;
+    } while (true);
+
+    return null;
 }

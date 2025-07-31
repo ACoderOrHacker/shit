@@ -25,7 +25,7 @@ void executeCmdLine(ref GlobalConfig config, string home) {
     string showPath = replaceFirst(path, home, "~");
     string gitBranch;
     try {
-        gitBranch = new GitData(config.gitDir, path).currentBranch;
+        gitBranch = new GitData(config.gitDir, path, true).currentBranch;
     } catch (GitRepoNotFoundException) {
         gitBranch = null;
     }
