@@ -47,26 +47,9 @@ class Registry {
 
 class ExecuteException : Exception {
     @safe
-    this(string message,
-        File stderr = stderr, 
-        File stdout = stdout) {
-        super(message);
-        this.stderr = stderr;
-        this.stdout = stdout;
+    this(string msg) {
+        super(msg);
     }
-
-    @safe
-    const(File) getStderr() const {
-        return stderr;
-    }
-
-    @safe
-    const(File) getStdout() const {
-        return stdout;
-    }
-
-    File stderr;
-    File stdout;
 }
 
 class RegisteredCommandNotFoundException : Exception {
@@ -92,32 +75,33 @@ struct ExecuteResult {
 
 ExecuteResult executeProcess(Command cmd, 
     File err = stderr, File output = stdout) {
-    scope(failure) throw new ExecuteException("failed from executeProcess",
-        err, output);
-
+    scope(failure) throw new ExecuteException(commandName(cmd) ~ ": command not found");
 
     auto pid = spawnProcess(cmd.commandList, stdin, output, err);
     auto result = ExecuteResult(pid.wait());
     return result;
 }
 
-ExecuteResult executeCommand(ref GlobalConfig config, Command command) {
-    string program = command.commandList[0];
+ExecuteResult executeNonSystem(Command cmd, ref GlobalConfig config) {
+    auto builtins = getBuiltinCommands();
+    string prog = commandName(cmd);
+    if (prog !in builtins)
+        throw new RegisteredCommandNotFoundException("command `" ~ prog ~ "` not found");
 
+    return getBuiltinCommands()[prog](config, cmd.commandList);
+}
+
+ExecuteResult executeCommand(ref GlobalConfig config, Command command) {
 	if (command.type == CommandType.System) {
 		return executeProcess(command);
 	} else if (command.type == CommandType.NonSystem) {
-		if (program in getBuiltinCommands()) {
-			return getBuiltinCommands()[program](config, command.commandList);
-		} else {
-			throw new RegisteredCommandNotFoundException("command " ~ program ~ "not found");
-		}
+		return executeNonSystem(command, config);
     } else {
 		// Auto type
-		if (program in getBuiltinCommands()) {
-			return getBuiltinCommands()[program](config, command.commandList);
-		} else {
-			return executeProcess(command);
-		}
+		if (commandName(command) in getBuiltinCommands()) {
+            return executeNonSystem(command, config);
+        } else {
+            return executeProcess(command);
+        }
 	}
 }

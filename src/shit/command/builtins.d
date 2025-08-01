@@ -28,10 +28,14 @@ ExecuteResult builtinCd(ref GlobalConfig config, string[] args) {
 }
 
 ExecuteResult builtinExit(ref GlobalConfig config, string[] args) {
-    if (args.length == 2) {
-        exit(args[1].to!int);
-    } else {
-        exit(0);
+    try {
+        if (args.length == 2) {
+            exit(args[1].to!int);
+        } else {
+            exit(0);
+        }
+    } catch (ConvException) {
+        log("exit: bad exit code");
     }
 
     return ExecuteResult(0);
