@@ -39,7 +39,7 @@ void executeCmdLine(ref GlobalConfig config, string home) {
     string branchInfo = gitBranch == null ? "" : " (" ~ gitBranch ~ ")";
     branchInfo.yellow.writeln;
 
-    string indicatorOfCommand = "$ ";
+    string indicatorOfCommand = isAdmin() ? "# " : "$ ";
     stderr.write(indicatorOfCommand);
     stderr.flush();
 
@@ -82,6 +82,7 @@ void executeCmdLine(ref GlobalConfig config, string home) {
             ).setControlChar(
                 delegate(File stream, ref string result, char c) {
                     if (c == 127 || c == 8) {
+                        // DEL or BS
                         if (commandLong == 0)
                             return false; // cannot delete characters
                         foreach (char _; lastChar)
@@ -90,6 +91,9 @@ void executeCmdLine(ref GlobalConfig config, string home) {
                         result = result[0 .. $ - lastChar.length];
                         commandLong = result.length;
                         typingCommand(stream, result);
+                    } else if (c == 27) {
+                        // ESCAPE
+                        // TODO: add escape codes
                     }
 
                     return false;

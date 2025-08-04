@@ -21,3 +21,13 @@ string getHostName() {
     }
     return host;
 }
+
+bool isAdmin() {
+    version (Windows) {
+        // TODO: add windows version
+    } else version (Posix) {
+        import core.sys.posix.unistd : geteuid;
+
+        return geteuid() == 0;
+    }
+}
