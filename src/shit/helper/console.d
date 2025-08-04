@@ -36,7 +36,7 @@ private:
     }
 
     void applySettings(termios settings) {
-        if (tcsetattr(STDIN_FILENO, TCSAFLUSH/*TCSANOW*/, &settings) < 0) {
+        if (tcsetattr(STDIN_FILENO, TCSANOW, &settings) < 0) {
             throw new ConsoleSettingException("Failed to set terminal attributes");
         }
     }
@@ -72,7 +72,7 @@ public:
 
 // TODO: add windows solution!!!
 
-void backn(File stream, ulong n) {
+void backnFromLineStart(File stream, ulong n) {
     stream.write("\r\033[" ~ n.to!string ~ "C");
     stream.flush();
 }
@@ -106,10 +106,7 @@ private int utf8CharLength(ubyte firstByte) {
 alias utf8char = string;
 
 bool readChar(ubyte *c) {
-    import core.stdc.stdio;
-    *c = cast(ubyte)getchar();
-    return true;
-    //return read(STDIN_FILENO, c, 1) == 1;
+    return read(STDIN_FILENO, c, 1) == 1;
 }
 
 // TODO: add windiws version
@@ -136,7 +133,7 @@ utf8char readUtf8Char() {
         if ((buffer[bytesRead] & 0xC0) != 0x80) {
             throw new ReadCharException(format("invalid utf-8 character: 0x%02X", buffer[bytesRead]));
         }
-            
+
         bytesRead++;
     }
 

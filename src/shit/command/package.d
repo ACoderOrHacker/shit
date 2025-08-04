@@ -26,7 +26,8 @@ struct Command {
 
         this.full = fullCommand;
         this.commandList = splitCommand(fullCommand);
-		char startsOfCommandName = commandName(this)[0];
+		string name = commandName(this);
+		char startsOfCommandName = name.length == 0 ? 's' /* anything you want */ : name[0];
 		if (startsOfCommandName == SystemCommandStartsWith) {
 			this.type = CommandType.System;
 			commandList[0] = commandList[0][1 .. $];
@@ -104,9 +105,13 @@ pure nothrow string[] commandArgs(ref Command cmd) {
 	auto c1 = Command(null);
 	auto c2 = Command("echo arg");
 	auto c3 = Command("echo arg1 arg2");
+	auto c4 = Command("#");
+
+	assert(commandName(c4) == "");
 	assert(commandName(c1) == "");
 	assert(commandName(c2) == "echo");
 
+    assert(commandArgs(c4) == []);
 	assert(commandArgs(c1) == []);
 	assert(commandArgs(c3) == ["arg1", "arg2"]);
 }

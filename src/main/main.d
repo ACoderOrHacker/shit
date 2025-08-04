@@ -61,7 +61,7 @@ void executeCmdLine(ref GlobalConfig config, string home) {
             color = "\033[37m";
         }
 
-        backn(stderr, indicatorOfCommand.length);
+        backnFromLineStart(stderr, indicatorOfCommand.length);
         clearFromCursor(stderr);
         stderr.write(color, command, "\033[0m");
         stderr.flush();
