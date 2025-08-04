@@ -7,3 +7,4 @@ public import shit.helper.paths;
 public import shit.helper.title;
 public import shit.helper.git;
 public import shit.helper.user;
+public import shit.helper.console;

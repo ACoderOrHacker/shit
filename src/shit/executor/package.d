@@ -4,6 +4,7 @@ import std.stdio;
 import std.array;
 import std.process;
 import shit.command;
+import shit.command.finder;
 import shit.configs.global;
 
 alias executeCommandType = ExecuteResult delegate(ref GlobalConfig, string[]);
@@ -77,6 +78,9 @@ ExecuteResult executeProcess(Command cmd,
     File err = stderr, File output = stdout) {
     scope(failure) throw new ExecuteException(commandName(cmd) ~ ": command not found");
 
+    string tmp = findProgram(cmd.commandList[0]);
+    if (tmp !is null) cmd.commandList[0] = tmp;
+
     auto pid = spawnProcess(cmd.commandList, stdin, output, err);
     auto result = ExecuteResult(pid.wait());
     return result;
@@ -104,4 +108,29 @@ ExecuteResult executeCommand(ref GlobalConfig config, Command command) {
             return executeProcess(command);
         }
 	}
+}
+
+bool isValidInNonSystem(string cmd) {
+    if (cmd in getBuiltinCommands())
+        return true;
+    return false;
+}
+
+bool isValidInSystem(string cmd) {
+    return findProgram(cmd) !is null;
+}
+
+bool isValidCommand(Command cmd) {
+    string prog = commandName(cmd);
+
+    final switch (cmd.type) {
+        case CommandType.System:
+            return isValidInSystem(prog);
+        case CommandType.NonSystem:
+            return isValidInNonSystem(prog);
+        case CommandType.Auto:
+            if (isValidInNonSystem(prog) || isValidInSystem(prog))
+                return true;
+            return false;
+    }
 }

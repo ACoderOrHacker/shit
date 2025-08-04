@@ -2,7 +2,7 @@ module shit.command;
 
 import std.array;
 import std.conv : to;
-public import shit.command.parser;
+import shit.command.parser;
 
 enum
 	SystemCommandStartsWith = '%',
