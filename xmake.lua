@@ -14,8 +14,9 @@ add_installfiles("etc/shit/*.json", {prefixdir = "etc/shit"})
 set_configdir("src/shit/configs")
 add_configfiles("src/shit/configs/project.d.in")
 
-add_requires("luajit")
+add_requires("lua 5.3.6", {alias = "lua"})
 add_requires("dub::colored", {alias = "colored"})
+add_requires("dub::dlua", {alias = "dlua"})
 
 add_includedirs("src")
 
@@ -31,7 +32,16 @@ target("conbase")
     add_options("unittests")
     add_dcflags("-boundscheck=on", {force = true})
     add_files("src/shit/**.d")
-    add_packages("luajit")
+target_end()
+
+target("pkgman")
+    set_kind("shared")
+
+    add_options("unittests")
+    add_dcflags("-boundscheck=on", {force = true})
+    add_files("src/pkgman/**.d")
+    add_packages("lua", {public = true})
+    add_packages("dlua", {public = true})
 target_end()
 
 target("shit")
@@ -39,7 +49,7 @@ target("shit")
 
     add_dcflags("-boundscheck=on", {force = true})
     add_files("src/main/**.d")
-    add_deps("conbase")
+    add_deps("conbase", "pkgman")
     add_packages("colored")
 target_end()
 
