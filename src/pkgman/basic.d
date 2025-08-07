@@ -4,6 +4,7 @@ import std.zip;
 import std.file;
 import std.json;
 import std.conv;
+import std.datetime;
 
 class BadPackageFileException : Exception {
     this(string msg) {
@@ -34,7 +35,7 @@ class PackageInfo {
     string license;
 }
 
-class Package {
+class Package(string Pkgtype) {
     final this(string file) {
         this.file_ = file;
     }
@@ -102,6 +103,7 @@ class Package {
         pkgtypeFile.name = ".pkgtype";
         pkgtypeFile.expandedData(cast(ubyte[])info.type);
         pkgtypeFile.compressionMethod = CompressionMethod.deflate;
+        pkgtypeFile.time(Clock.currTime());
 
         ArchiveMember packageJsonFile = new ArchiveMember;
         JSONValue packageValue = [
@@ -115,6 +117,7 @@ class Package {
         packageJsonFile.name = "package.json";
         packageJsonFile.expandedData(cast(ubyte[])packageValue.toPrettyString);
         packageJsonFile.compressionMethod = CompressionMethod.deflate;
+        pkgtypeFile.time(Clock.currTime());
 
         archive.addMember(pkgtypeFile);
         archive.addMember(packageJsonFile);
@@ -124,7 +127,7 @@ class Package {
 
     void writeDefaultPackage() {
         PackageInfo info = new PackageInfo;
-        info.type = "test";
+        info.type = Pkgtype;
         info.name = "";
         info.ver = "";
         info.desc = "";
