@@ -50,14 +50,14 @@ public:
         restore();
     }
 
-    void enableCbreak() {
+    void enableCbreak(ubyte timeout = 0) {
         if (isCbreak) return;
 
         termios settings = original;
         settings.c_lflag &= ~(ICANON | ECHO);
 
         settings.c_cc[VMIN] = 1;
-        settings.c_cc[VTIME] = 0;
+        settings.c_cc[VTIME] = timeout;
 
         applySettings(settings);
         isCbreak = true;

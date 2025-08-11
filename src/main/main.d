@@ -7,6 +7,7 @@ import std.format : format;
 import std.conv : to;
 import std.algorithm : startsWith, endsWith;
 import std.ascii : isControl;
+import std.utf;
 import colored;
 import shit.helper;
 import shit.helper.signal;
@@ -17,6 +18,9 @@ import shit.executor;
 import shit.command;
 import shit.command.parser;
 import shit.readline;
+import shit.readline.controlchar;
+import shit.readline.events;
+import pkgman.basic;
 
 void setDefaultTitle() {
     setConsoleTitle(format("SHIT shell v%s", shitFullVersion));
@@ -50,7 +54,7 @@ void executeCmdLine(ref GlobalConfig config, string home) {
     scope(failure) term.restore();
 
     ulong commandLong = 0; // writed command string length (bytes)
-    utf8char lastChar;
+    ulong beforeCursorCommandBytes = 0;
 
     typingCommandProcessType typingCommand = delegate(File, string command) {
         string color;
@@ -64,6 +68,7 @@ void executeCmdLine(ref GlobalConfig config, string home) {
         backnFromLineStart(stderr, indicatorOfCommand.length);
         clearFromCursor(stderr);
         stderr.write(color, command, "\033[0m");
+        backnFromLineStart(stderr, indicatorOfCommand.length + beforeCursorCommandBytes);
         stderr.flush();
 
         commandLong = command.length;
@@ -72,10 +77,12 @@ void executeCmdLine(ref GlobalConfig config, string home) {
     // Read command from stdin
     string command = readline(stdin, "\n",
         new ReadlineConfig()
-            .setByChar(
-                delegate(File, utf8char c) {
-                    if (c.length == 1 && isControl(c[0])) return;
-                    lastChar = c.dup;
+            .setInsertChar(
+                delegate(ref string s, utf8char c) {
+                    string beforeBytes = s[0 .. beforeCursorCommandBytes];
+                    string afterBytes = s[beforeCursorCommandBytes .. $];
+                    s = beforeBytes ~ c ~ afterBytes;
+                    beforeCursorCommandBytes += c.length;
                 }
             ).setTypingCommand(
                 typingCommand
@@ -85,15 +92,36 @@ void executeCmdLine(ref GlobalConfig config, string home) {
                         // DEL or BS
                         if (commandLong == 0)
                             return false; // cannot delete characters
-                        foreach (char _; lastChar)
+                        utf8char deleteChar = utf8RangeBeforeWithCombining(result, beforeCursorCommandBytes);
+                        foreach (char _; deleteChar)
                             stderr.write("\b \b");
                         stderr.flush();
-                        result = result[0 .. $ - lastChar.length];
+
+                        string before = result[0 .. beforeCursorCommandBytes - deleteChar.length];
+                        string after = result[beforeCursorCommandBytes .. $];
+
+                        result = before ~ after;
                         commandLong = result.length;
+                        beforeCursorCommandBytes -= deleteChar.length;
                         typingCommand(stream, result);
                     } else if (c == 27) {
                         // ESCAPE
-                        // TODO: add escape codes
+                        string code = readEscapeSequence();
+                        Event ev = processEscapeSequence(code);
+
+                        ev.match!(
+                            delegate(CursorMoveEvent e) {
+                                if (beforeCursorCommandBytes == 0) return;
+                                if (e.direction == CursorMoveType.Left) {
+                                    stderr.write("\x1b[" ~ e.step.to!string ~ "D");
+                                    beforeCursorCommandBytes -= utf8RangeBeforeWithCombining(result, beforeCursorCommandBytes).length;
+                                } else if (e.direction == CursorMoveType.Right) {
+                                    stderr.write("\x1b[" ~ e.step.to!string ~ "C");
+                                    beforeCursorCommandBytes += stride(result[beforeCursorCommandBytes .. $], 0);
+                                }
+                            },
+                            _ => stderr.write(code)
+                        );
                     }
 
                     return false;

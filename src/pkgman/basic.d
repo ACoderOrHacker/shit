@@ -36,6 +36,21 @@ class PackageInfo {
 }
 
 class Package(string Pkgtype) {
+    protected void readExtra(ZipArchive, ArchiveMember, string, ref PackageInfo) {}
+    protected void writeExtra(ZipArchive, PackageInfo) {}
+    protected PackageInfo defaultPackage() {
+        PackageInfo info = new PackageInfo;
+
+        info.type = Pkgtype;
+        info.name = "";
+        info.ver = "";
+        info.desc = "";
+        info.license = "";
+        info.authors = [];
+
+        return info;
+    }
+
     final this(string file) {
         this.file_ = file;
     }
@@ -91,6 +106,8 @@ class Package(string Pkgtype) {
                     throw new BadPackageInfoException(e.msg);
                 }
             }
+
+            readExtra(archive, am, name, info);
         }
 
         return info;
@@ -121,20 +138,14 @@ class Package(string Pkgtype) {
 
         archive.addMember(pkgtypeFile);
         archive.addMember(packageJsonFile);
+
+        writeExtra(archive, info);
         auto data = archive.build();
         write(file_, data);
     }
 
     void writeDefaultPackage() {
-        PackageInfo info = new PackageInfo;
-        info.type = Pkgtype;
-        info.name = "";
-        info.ver = "";
-        info.desc = "";
-        info.license = "";
-        info.authors = [];
-
-        writePackage(info);
+        writePackage(defaultPackage());
     }
 
     private string file_;

@@ -13,6 +13,7 @@ alias eachLoopProcessType = void delegate(File);
 alias typingCommandProcessType = void delegate(File, string);
 alias controlCharProcessType = bool delegate(File, ref string, char);
 alias analyzeCommandProcessType = void delegate(File, Command);
+alias insertCharProcessType = void delegate(ref string, utf8char);
 
 class ReadlineConfig {
     enterCommandProcessType   enterCommand;    // run when enter command input
@@ -22,6 +23,7 @@ class ReadlineConfig {
     typingCommandProcessType  typingCommand;   // run when typing command
     controlCharProcessType    controlChar;     // run when meet a control character, if returns false, then continue to next character
     analyzeCommandProcessType analyzeCommand;  // run after parsing command (if the command is not valid, readline will not invoke it)
+    insertCharProcessType     insertChar;
 
     this() {
         enterCommand = delegate(File) {};
@@ -31,6 +33,7 @@ class ReadlineConfig {
         typingCommand = delegate(File, string) {};
         controlChar = delegate(File, ref string, char) { return false; };
         analyzeCommand = delegate(File, Command) {};
+        insertChar = delegate(ref string s, utf8char c) { s ~= c; };
     }
 
     ReadlineConfig setEnterCommand(enterCommandProcessType process) {
@@ -74,6 +77,12 @@ class ReadlineConfig {
 
         return this;
     }
+
+    ReadlineConfig setInsertChar(insertCharProcessType process) {
+        this.insertChar = process;
+
+        return this;
+    }
 }
 
 string readline(File stream = stdin,
@@ -101,7 +110,7 @@ string readline(File stream = stdin,
             entered = true;
         }
 
-        result ~= c;
+        config.insertChar(result, c);
 
         config.typingCommand(stream, result);
 
