@@ -4,18 +4,22 @@ import std.json;
 import std.file : read, rename;
 import std.stdio : File;
 
-class SafeWriteException : Exception {
-    this(string msg) {
+class SafeWriteException : Exception
+{
+    this(string msg)
+    {
         super(msg);
     }
 }
 
-JSONValue readJSON(string path) {
+JSONValue readJSON(string path)
+{
     auto content = cast(string) read(path);
     return parseJSON(content);
 }
 
-void writeJSON(string path, JSONValue value, bool safeWrite = false) {
+void writeJSON(string path, JSONValue value, bool safeWrite = false)
+{
     File f;
     if (safeWrite)
         f = File(path ~ ".tmp", "w"); // add tmp file
@@ -24,11 +28,15 @@ void writeJSON(string path, JSONValue value, bool safeWrite = false) {
     f.write(value.toPrettyString);
     f.close();
 
-    if (safeWrite) {
-        try {
+    if (safeWrite)
+    {
+        try
+        {
             rename(path ~ ".tmp", path); // rename tmp file
-        } catch (Exception e) {
+        }
+        catch (Exception e)
+        {
             throw new SafeWriteException("failed to write json file: " ~ e.msg);
-        } 
+        }
     }
 }

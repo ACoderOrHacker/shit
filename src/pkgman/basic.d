@@ -6,27 +6,34 @@ import std.json;
 import std.conv;
 import std.datetime;
 
-class BadPackageFileException : Exception {
-    this(string msg) {
+class BadPackageFileException : Exception
+{
+    this(string msg)
+    {
         super(msg);
     }
 }
 
-class BadPackageException : Exception {
-    this(string msg) {
+class BadPackageException : Exception
+{
+    this(string msg)
+    {
         super(msg);
     }
 }
 
-class BadPackageInfoException : Exception {
-    this(string msg) {
+class BadPackageInfoException : Exception
+{
+    this(string msg)
+    {
         super(msg);
     }
 }
 
-class PackageInfo {
+class PackageInfo
+{
     string type;
-    
+
     string name;
     string ver;
     string desc;
@@ -35,10 +42,18 @@ class PackageInfo {
     string license;
 }
 
-class Package(string Pkgtype) {
-    protected void readExtra(ZipArchive, ArchiveMember, string, ref PackageInfo) {}
-    protected void writeExtra(ZipArchive, PackageInfo) {}
-    protected PackageInfo defaultPackage() {
+class Package(string Pkgtype)
+{
+    protected void readExtra(ZipArchive, ArchiveMember, string, ref PackageInfo)
+    {
+    }
+
+    protected void writeExtra(ZipArchive, PackageInfo)
+    {
+    }
+
+    protected PackageInfo defaultPackage()
+    {
         PackageInfo info = new PackageInfo;
 
         info.type = Pkgtype;
@@ -51,58 +66,81 @@ class Package(string Pkgtype) {
         return info;
     }
 
-    final this(string file) {
+    final this(string file)
+    {
         this.file_ = file;
     }
 
-    protected auto getFile() {
+    protected auto getFile()
+    {
         return file_;
     }
 
-    PackageInfo readPackage() {
-        static T readValue(T)(JSONValue jsonValue, string key) {
-            try {
+    PackageInfo readPackage()
+    {
+        static T readValue(T)(JSONValue jsonValue, string key)
+        {
+            try
+            {
                 return jsonValue[key].get!T;
-            } catch (JSONException e) {
+            }
+            catch (JSONException e)
+            {
                 throw new BadPackageInfoException(e.msg);
             }
         }
 
         ZipArchive archive = null;
-        try {
+        try
+        {
             archive = new ZipArchive(read(file_));
-        } catch (ZipException e) {
+        }
+        catch (ZipException e)
+        {
             throw new BadPackageException(e.msg);
-        } catch (FileException e) {
+        }
+        catch (FileException e)
+        {
             throw new BadPackageFileException(e.msg);
         }
 
         PackageInfo info = new PackageInfo;
-        foreach (name, am; archive.directory) {
+        foreach (name, am; archive.directory)
+        {
             archive.expand(am);
-            if (name == ".pkgtype") {
+            if (name == ".pkgtype")
+            {
                 if (am.expandedSize <= 0)
                     throw new BadPackageInfoException("bad .pkgtype file, length <= 0");
-                info.type = cast(string)am.expandedData;
-            } else if (name == "package.json") {
-                try {
-                    auto jsonValue = parseJSON(cast(string)am.expandedData);
+                info.type = cast(string) am.expandedData;
+            }
+            else if (name == "package.json")
+            {
+                try
+                {
+                    auto jsonValue = parseJSON(cast(string) am.expandedData);
 
-                    info.name    = readValue!string(jsonValue, "name");
-                    info.ver     = readValue!string(jsonValue, "version");
-                    info.desc    = readValue!string(jsonValue, "description");
+                    info.name = readValue!string(jsonValue, "name");
+                    info.ver = readValue!string(jsonValue, "version");
+                    info.desc = readValue!string(jsonValue, "description");
                     info.license = readValue!string(jsonValue, "license");
                     auto authorsValue = readValue!(JSONValue[])(jsonValue, "authors");
                     info.authors.length = authorsValue.length;
-                    foreach (index, authorValue; authorsValue) {
-                        try {
+                    foreach (index, authorValue; authorsValue)
+                    {
+                        try
+                        {
                             info.authors[index] = authorValue.str;
-                        } catch (JSONException e) {
+                        }
+                        catch (JSONException e)
+                        {
                             throw new BadPackageInfoException(
                                 "from package.json/authors[" ~ index.to!string ~ "]: " ~ e.msg);
                         }
                     }
-                } catch (JSONException e) {
+                }
+                catch (JSONException e)
+                {
                     throw new BadPackageInfoException(e.msg);
                 }
             }
@@ -113,26 +151,27 @@ class Package(string Pkgtype) {
         return info;
     }
 
-    void writePackage(PackageInfo info) {
+    void writePackage(PackageInfo info)
+    {
         ZipArchive archive = new ZipArchive;
 
         ArchiveMember pkgtypeFile = new ArchiveMember;
         pkgtypeFile.name = ".pkgtype";
-        pkgtypeFile.expandedData(cast(ubyte[])info.type);
+        pkgtypeFile.expandedData(cast(ubyte[]) info.type);
         pkgtypeFile.compressionMethod = CompressionMethod.deflate;
         pkgtypeFile.time(Clock.currTime());
 
         ArchiveMember packageJsonFile = new ArchiveMember;
         JSONValue packageValue = [
-            "name":        JSONValue(info.name),
-            "version":     JSONValue(info.ver),
+            "name": JSONValue(info.name),
+            "version": JSONValue(info.ver),
             "description": JSONValue(info.desc),
-            "license":     JSONValue(info.license),
-            "authors":     JSONValue(info.authors)
+            "license": JSONValue(info.license),
+            "authors": JSONValue(info.authors)
         ];
 
         packageJsonFile.name = "package.json";
-        packageJsonFile.expandedData(cast(ubyte[])packageValue.toPrettyString);
+        packageJsonFile.expandedData(cast(ubyte[]) packageValue.toPrettyString);
         packageJsonFile.compressionMethod = CompressionMethod.deflate;
         pkgtypeFile.time(Clock.currTime());
 
@@ -144,7 +183,8 @@ class Package(string Pkgtype) {
         write(file_, data);
     }
 
-    void writeDefaultPackage() {
+    void writeDefaultPackage()
+    {
         writePackage(defaultPackage());
     }
 

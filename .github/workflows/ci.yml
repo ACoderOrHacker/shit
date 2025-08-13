@@ -65,10 +65,10 @@ jobs:
 
       - name: Set Arch
         run: |
-          xmake config -m release -y
-          xmake f -a ${{matrix.arch}} -y
+          xmake config -m release -y -v
+          xmake f -a ${{matrix.arch}} -y -v
 
-      - name: update
+      - name: Update Repo
         run: |
           xrepo update-repo
           xrepo list-repo

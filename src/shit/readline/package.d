@@ -15,17 +15,19 @@ alias controlCharProcessType = bool delegate(File, ref string, char);
 alias analyzeCommandProcessType = void delegate(File, Command);
 alias insertCharProcessType = void delegate(ref string, utf8char);
 
-class ReadlineConfig {
-    enterCommandProcessType   enterCommand;    // run when enter command input
-    exitCommandProcessType    exitCommand;     // run when exit command input
-    byCharProcessType         byChar;          // run when anything done, then get a character to output, etc
-    eachLoopProcessType       eachLoop;        // run when each loop's begining
-    typingCommandProcessType  typingCommand;   // run when typing command
-    controlCharProcessType    controlChar;     // run when meet a control character, if returns false, then continue to next character
-    analyzeCommandProcessType analyzeCommand;  // run after parsing command (if the command is not valid, readline will not invoke it)
-    insertCharProcessType     insertChar;
+class ReadlineConfig
+{
+    enterCommandProcessType enterCommand; // run when enter command input
+    exitCommandProcessType exitCommand; // run when exit command input
+    byCharProcessType byChar; // run when anything done, then get a character to output, etc
+    eachLoopProcessType eachLoop; // run when each loop's begining
+    typingCommandProcessType typingCommand; // run when typing command
+    controlCharProcessType controlChar; // run when meet a control character, if returns false, then continue to next character
+    analyzeCommandProcessType analyzeCommand; // run after parsing command (if the command is not valid, readline will not invoke it)
+    insertCharProcessType insertChar;
 
-    this() {
+    this()
+    {
         enterCommand = delegate(File) {};
         exitCommand = delegate(File, string) {};
         byChar = delegate(File, utf8char) {};
@@ -36,49 +38,57 @@ class ReadlineConfig {
         insertChar = delegate(ref string s, utf8char c) { s ~= c; };
     }
 
-    ReadlineConfig setEnterCommand(enterCommandProcessType process) {
+    ReadlineConfig setEnterCommand(enterCommandProcessType process)
+    {
         this.enterCommand = process;
 
         return this;
     }
 
-    ReadlineConfig setExitCommand(exitCommandProcessType process) {
+    ReadlineConfig setExitCommand(exitCommandProcessType process)
+    {
         this.exitCommand = process;
 
         return this;
     }
 
-    ReadlineConfig setByChar(byCharProcessType process) {
+    ReadlineConfig setByChar(byCharProcessType process)
+    {
         this.byChar = process;
 
         return this;
     }
 
-    ReadlineConfig setEachLoop(eachLoopProcessType process) {
+    ReadlineConfig setEachLoop(eachLoopProcessType process)
+    {
         this.eachLoop = process;
 
         return this;
     }
 
-    ReadlineConfig setTypingCommand(typingCommandProcessType process) {
+    ReadlineConfig setTypingCommand(typingCommandProcessType process)
+    {
         this.typingCommand = process;
 
         return this;
     }
 
-    ReadlineConfig setControlChar(controlCharProcessType process) {
+    ReadlineConfig setControlChar(controlCharProcessType process)
+    {
         this.controlChar = process;
 
         return this;
     }
 
-    ReadlineConfig setAnalyzeCommand(analyzeCommandProcessType process) {
+    ReadlineConfig setAnalyzeCommand(analyzeCommandProcessType process)
+    {
         this.analyzeCommand = process;
 
         return this;
     }
 
-    ReadlineConfig setInsertChar(insertCharProcessType process) {
+    ReadlineConfig setInsertChar(insertCharProcessType process)
+    {
         this.insertChar = process;
 
         return this;
@@ -87,25 +97,30 @@ class ReadlineConfig {
 
 string readline(File stream = stdin,
     utf8char end = "\n",
-    ReadlineConfig config) {
+    ReadlineConfig config)
+{
     string result;
 
     bool isCommand = true; // at first, the input is the command
     bool entered = false, exited = false;
     utf8char c;
-    while (true) {
+    while (true)
+    {
         c = readUtf8Char();
-        if (c == end) break;
+        if (c == end)
+            break;
 
         config.byChar(stream, c);
 
-        if (c.length == 1 && isControl(c[0])) {
+        if (c.length == 1 && isControl(c[0]))
+        {
             if (!config.controlChar(stream, result, c[0]))
                 continue;
         }
 
         config.eachLoop(stream);
-        if (isCommand && !entered) {
+        if (isCommand && !entered)
+        {
             config.enterCommand(stream);
             entered = true;
         }
@@ -115,9 +130,12 @@ string readline(File stream = stdin,
         config.typingCommand(stream, result);
 
         Command parsedCommand;
-        try {
+        try
+        {
             parsedCommand = Command(result);
-        } catch (ParseError) {
+        }
+        catch (ParseError)
+        {
             // user is typing the command
             // but we can't analyze anything
             // so do nothing
@@ -126,7 +144,8 @@ string readline(File stream = stdin,
 
         config.analyzeCommand(stream, parsedCommand);
 
-        if (parsedCommand.commandList.length > 1 && !exited) {
+        if (parsedCommand.commandList.length > 1 && !exited)
+        {
             config.exitCommand(stream, result);
             isCommand = false;
             exited = true;
@@ -134,11 +153,16 @@ string readline(File stream = stdin,
 
     }
 
-    try {
-        if (Command(result).commandList.length == 1 && !exited) {
+    try
+    {
+        if (Command(result).commandList.length == 1 && !exited)
+        {
             config.exitCommand(stream, result); // be sure that exitCommand always works
         }
-    } catch (ParseError) {}
+    }
+    catch (ParseError)
+    {
+    }
 
     return result;
 }

@@ -1,20 +1,22 @@
 module shit.readline.events;
 
 public import std.sumtype;
-public import std.variant;
 
-struct TextStyleEvent {
+struct TextStyleEvent
+{
     int[] modes;
 }
 
-enum CursorMoveType {
+enum CursorMoveType
+{
     Left,
     Right,
     Up,
     Down
 }
 
-enum ClearScreenMode {
+enum ClearScreenMode
+{
     All,
     FromCursorToScreenHead,
     FromCursorToScreenTail,
@@ -23,60 +25,78 @@ enum ClearScreenMode {
     FromCursorToLineTail
 }
 
-struct CursorMovePosEvent {
+struct CursorMovePosEvent
+{
     ulong row;
     ulong col;
 }
 
-struct CursorMoveEvent {
+struct CursorMoveEvent
+{
     CursorMoveType direction;
     ulong step;
 }
 
-struct ClearScreenEvent {
+struct ClearScreenEvent
+{
     ClearScreenMode mode;
 }
 
-struct ShowOrHidCursorEvent {
+struct ShowOrHidCursorEvent
+{
     bool isShow;
 }
 
-struct WindowTitleEvent {
+struct WindowTitleEvent
+{
     string title;
     bool onlyTitle;
 }
 
-struct HyperLinkEvent {
+struct HyperLinkEvent
+{
     private string data;
 
     @property @safe
-    pure nothrow bool isEnd() const {
+    pure nothrow bool isEnd() const
+    {
         return data is null;
     }
 
     @property @safe
-    pure nothrow string hyperLink() const {
+    pure nothrow string hyperLink() const
+    {
         return data;
     }
 
     @property @safe
-    pure nothrow void hyperLink(string data) {
+    pure nothrow void hyperLink(string data)
+    {
         this.data = data;
     }
 }
 
-struct SaveOrRestoreCursorPosEvent {
+struct SaveOrRestoreCursorPosEvent
+{
     bool isSave;
 }
 
-struct ResetConsoleEvent {}
-struct GotoNextLineHeadEvent {}
-struct ScrollUpCursorEvent {}
-
-struct UnknownEvent {
-    string code;
+struct ResetConsoleEvent
+{
 }
 
+struct GotoNextLineHeadEvent
+{
+}
+
+struct ScrollUpCursorEvent
+{
+}
+
+struct UnknownEvent
+{
+    string code;
+}
 
 alias Event = SumType!(
     TextStyleEvent,

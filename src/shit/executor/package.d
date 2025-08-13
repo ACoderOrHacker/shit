@@ -13,30 +13,38 @@ alias builtinCommandsType = executeCommandType[string];
 
 shared builtinCommandsType builtinCommands;
 
-ref shared(builtinCommandsType) getBuiltinCommands() {
+ref shared(builtinCommandsType) getBuiltinCommands()
+{
     return builtinCommands;
 }
 
-class Registry {
-    Registry register(string name, executeCommandType command) {
+class Registry
+{
+    Registry register(string name, executeCommandType command)
+    {
         getBuiltinCommands()[name] = command;
         return this;
     }
 
-    Registry register(string name, executeCommandFunctionType command) {
+    Registry register(string name, executeCommandFunctionType command)
+    {
         import std.functional : toDelegate;
+
         getBuiltinCommands()[name] = toDelegate(command);
         return this;
     }
 }
 
-@("registry") unittest {
+@("registry") unittest
+{
     assert(&getBuiltinCommands() == &builtinCommands);
     auto r = new Registry;
 
-    ExecuteResult t(ref GlobalConfig, string[]) {
+    ExecuteResult t(ref GlobalConfig, string[])
+    {
         return ExecuteResult(0);
     }
+
     r.register("test1", &t);
     r.register("test2", &t);
 
@@ -46,47 +54,58 @@ class Registry {
     assert("test2" in c, "Failed write `test2` to registry");
 }
 
-class ExecuteException : Exception {
+class ExecuteException : Exception
+{
     @safe
-    this(string msg) {
+    this(string msg)
+    {
         super(msg);
     }
 }
 
-class RegisteredCommandNotFoundException : Exception {
-	this(string msg) {
-		super(msg);
-	}
+class RegisteredCommandNotFoundException : Exception
+{
+    this(string msg)
+    {
+        super(msg);
+    }
 }
 
-struct ExecuteResult {
+struct ExecuteResult
+{
 
     @safe
-    this(int exit_code) {
+    this(int exit_code)
+    {
         this.exit_code = exit_code;
     }
 
     @safe
-    const(int) getExitCode() const {
+    const(int) getExitCode() const
+    {
         return exit_code;
     }
 
     int exit_code;
 }
 
-ExecuteResult executeProcess(Command cmd, 
-    File err = stderr, File output = stdout) {
-    scope(failure) throw new ExecuteException(commandName(cmd) ~ ": command not found");
+ExecuteResult executeProcess(Command cmd,
+    File err = stderr, File output = stdout)
+{
+    scope (failure)
+        throw new ExecuteException(commandName(cmd) ~ ": command not found");
 
     string tmp = findProgram(cmd.commandList[0]);
-    if (tmp !is null) cmd.commandList[0] = tmp;
+    if (tmp !is null)
+        cmd.commandList[0] = tmp;
 
     auto pid = spawnProcess(cmd.commandList, stdin, output, err);
     auto result = ExecuteResult(pid.wait());
     return result;
 }
 
-ExecuteResult executeNonSystem(Command cmd, ref GlobalConfig config) {
+ExecuteResult executeNonSystem(Command cmd, ref GlobalConfig config)
+{
     auto builtins = getBuiltinCommands();
     string prog = commandName(cmd);
     if (prog !in builtins)
@@ -95,42 +114,55 @@ ExecuteResult executeNonSystem(Command cmd, ref GlobalConfig config) {
     return getBuiltinCommands()[prog](config, cmd.commandList);
 }
 
-ExecuteResult executeCommand(ref GlobalConfig config, Command command) {
-	if (command.type == CommandType.System) {
-		return executeProcess(command);
-	} else if (command.type == CommandType.NonSystem) {
-		return executeNonSystem(command, config);
-    } else {
-		// Auto type
-		if (commandName(command) in getBuiltinCommands()) {
+ExecuteResult executeCommand(ref GlobalConfig config, Command command)
+{
+    if (command.type == CommandType.System)
+    {
+        return executeProcess(command);
+    }
+    else if (command.type == CommandType.NonSystem)
+    {
+        return executeNonSystem(command, config);
+    }
+    else
+    {
+        // Auto type
+        if (commandName(command) in getBuiltinCommands())
+        {
             return executeNonSystem(command, config);
-        } else {
+        }
+        else
+        {
             return executeProcess(command);
         }
-	}
+    }
 }
 
-bool isValidInNonSystem(string cmd) {
+bool isValidInNonSystem(string cmd)
+{
     if (cmd in getBuiltinCommands())
         return true;
     return false;
 }
 
-bool isValidInSystem(string cmd) {
+bool isValidInSystem(string cmd)
+{
     return findProgram(cmd) !is null;
 }
 
-bool isValidCommand(Command cmd) {
+bool isValidCommand(Command cmd)
+{
     string prog = commandName(cmd);
 
-    final switch (cmd.type) {
-        case CommandType.System:
-            return isValidInSystem(prog);
-        case CommandType.NonSystem:
-            return isValidInNonSystem(prog);
-        case CommandType.Auto:
-            if (isValidInNonSystem(prog) || isValidInSystem(prog))
-                return true;
-            return false;
+    final switch (cmd.type)
+    {
+    case CommandType.System:
+        return isValidInSystem(prog);
+    case CommandType.NonSystem:
+        return isValidInNonSystem(prog);
+    case CommandType.Auto:
+        if (isValidInNonSystem(prog) || isValidInSystem(prog))
+            return true;
+        return false;
     }
 }

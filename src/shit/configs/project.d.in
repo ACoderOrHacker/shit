@@ -12,6 +12,7 @@ string shitArchitecture = "${arch}";
 string shitOs = "${os}";
 string shitMode = "${mode}";
 
-string shitConfigsPath() {
+string shitConfigsPath()
+{
     return buildPath(dirName(dirName(executablePath())), "etc", "shit");
 }

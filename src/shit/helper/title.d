@@ -10,10 +10,12 @@ void setConsoleTitle(string title)
         auto wtitle = toUTF16z(title);
         SetConsoleTitleW(wtitle);
     }
-    else version (linux) version (OSX)
-    {
-        import core.stdc.stdio;
-        printf("\033]0;%s\007", title.ptr);
-        fflush(stdout);
-    }
+    else version (linux)
+        version (OSX)
+        {
+            import core.stdc.stdio;
+
+            printf("\033]0;%s\007", title.ptr);
+            fflush(stdout);
+        }
 }
