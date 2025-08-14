@@ -6,7 +6,7 @@ import std.json;
 import std.conv;
 import std.datetime;
 
-class BadPackageFileException : Exception
+export class BadPackageFileException : Exception
 {
     this(string msg)
     {
@@ -14,7 +14,7 @@ class BadPackageFileException : Exception
     }
 }
 
-class BadPackageException : Exception
+export class BadPackageException : Exception
 {
     this(string msg)
     {
@@ -22,7 +22,7 @@ class BadPackageException : Exception
     }
 }
 
-class BadPackageInfoException : Exception
+export class BadPackageInfoException : Exception
 {
     this(string msg)
     {
@@ -30,7 +30,7 @@ class BadPackageInfoException : Exception
     }
 }
 
-class PackageInfo
+export class PackageInfo
 {
     string type;
 
@@ -42,7 +42,7 @@ class PackageInfo
     string license;
 }
 
-class Package(string Pkgtype)
+export class Package(string Pkgtype)
 {
     protected void readExtra(ZipArchive, ArchiveMember, string, ref PackageInfo)
     {

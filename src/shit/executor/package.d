@@ -1,4 +1,4 @@
-module executor;
+module shit.executor;
 
 import std.stdio;
 import std.array;
@@ -13,12 +13,12 @@ alias builtinCommandsType = executeCommandType[string];
 
 shared builtinCommandsType builtinCommands;
 
-ref shared(builtinCommandsType) getBuiltinCommands()
+export ref shared(builtinCommandsType) getBuiltinCommands()
 {
     return builtinCommands;
 }
 
-class Registry
+export class Registry
 {
     Registry register(string name, executeCommandType command)
     {
@@ -54,7 +54,7 @@ class Registry
     assert("test2" in c, "Failed write `test2` to registry");
 }
 
-class ExecuteException : Exception
+export class ExecuteException : Exception
 {
     @safe
     this(string msg)
@@ -63,7 +63,7 @@ class ExecuteException : Exception
     }
 }
 
-class RegisteredCommandNotFoundException : Exception
+export class RegisteredCommandNotFoundException : Exception
 {
     this(string msg)
     {
@@ -71,7 +71,7 @@ class RegisteredCommandNotFoundException : Exception
     }
 }
 
-struct ExecuteResult
+export struct ExecuteResult
 {
 
     @safe
@@ -89,7 +89,7 @@ struct ExecuteResult
     int exit_code;
 }
 
-ExecuteResult executeProcess(Command cmd,
+export ExecuteResult executeProcess(Command cmd,
     File err = stderr, File output = stdout)
 {
     scope (failure)
@@ -104,7 +104,7 @@ ExecuteResult executeProcess(Command cmd,
     return result;
 }
 
-ExecuteResult executeNonSystem(Command cmd, ref GlobalConfig config)
+export ExecuteResult executeNonSystem(Command cmd, ref GlobalConfig config)
 {
     auto builtins = getBuiltinCommands();
     string prog = commandName(cmd);
@@ -114,7 +114,7 @@ ExecuteResult executeNonSystem(Command cmd, ref GlobalConfig config)
     return getBuiltinCommands()[prog](config, cmd.commandList);
 }
 
-ExecuteResult executeCommand(ref GlobalConfig config, Command command)
+export ExecuteResult executeCommand(ref GlobalConfig config, Command command)
 {
     if (command.type == CommandType.System)
     {
@@ -138,19 +138,19 @@ ExecuteResult executeCommand(ref GlobalConfig config, Command command)
     }
 }
 
-bool isValidInNonSystem(string cmd)
+export bool isValidInNonSystem(string cmd)
 {
     if (cmd in getBuiltinCommands())
         return true;
     return false;
 }
 
-bool isValidInSystem(string cmd)
+export bool isValidInSystem(string cmd)
 {
     return findProgram(cmd) !is null;
 }
 
-bool isValidCommand(Command cmd)
+export bool isValidCommand(Command cmd)
 {
     string prog = commandName(cmd);
 

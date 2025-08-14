@@ -38,7 +38,7 @@ private bool isExecutable(string path)
     }
 }
 
-string findProgram(string programName)
+export string findProgram(string programName)
 {
     // absolute path
     if (programName.canFind('\\') || programName.canFind('/'))

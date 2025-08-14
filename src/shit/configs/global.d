@@ -5,11 +5,11 @@ import std.file;
 import std.path;
 import std.conv : to;
 import shit.configs.project;
-import shit.helper.paths;
+import helper.paths;
 public import shit.configs.basic;
 public import shit.configs.project;
 
-class GlobalConfigNotFoundException : Exception
+export class GlobalConfigNotFoundException : Exception
 {
     pure nothrow this(string msg)
     {
@@ -17,7 +17,7 @@ class GlobalConfigNotFoundException : Exception
     }
 }
 
-class BadGlobalConfigException : Exception
+export class BadGlobalConfigException : Exception
 {
     pure nothrow this(string msg)
     {
@@ -25,14 +25,14 @@ class BadGlobalConfigException : Exception
     }
 }
 
-struct GlobalConfig
+export struct GlobalConfig
 {
     string defaultPath;
     bool showExitCode;
     string gitDir;
 }
 
-GlobalConfig getGlobalConfig()
+export GlobalConfig getGlobalConfig()
 {
     GlobalConfig config;
     JSONValue value;

@@ -1,4 +1,4 @@
-module shit.helper.title;
+module helper.title;
 
 void setConsoleTitle(string title)
 {

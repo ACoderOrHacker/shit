@@ -1,4 +1,4 @@
-module shit.helper.exit;
+module helper.exit;
 
 export class ExitSignal : Exception
 {

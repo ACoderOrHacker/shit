@@ -1,4 +1,4 @@
-module shit.helper.string;
+module helper.string;
 
 export string replaceFirst(string input, string oldHeader, string newHeader)
 {
@@ -27,7 +27,7 @@ export string replaceFirst(string input, string oldHeader, string newHeader)
             "Failed replaceFirst(" ~ test ~ ", " ~ old ~ ", " ~ new_ ~
                 "\n  Expected: " ~ res ~
                 "\n  Got: " ~ result);
-    };
+    }
 
     check(test1, "SHIT123456");
     check(test2, "114514");

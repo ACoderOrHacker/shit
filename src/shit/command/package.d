@@ -2,7 +2,7 @@ module shit.command;
 
 import std.array;
 import std.conv : to;
-import shit.command.parser;
+public import shit.command.parser;
 
 enum SystemCommandStartsWith = '%',
     NonSystemCommandStartsWith = '@';
@@ -14,9 +14,9 @@ enum CommandType
     Auto
 }
 
-struct Command
+export struct Command
 {
-    this(string fullCommand)
+    export this(string fullCommand)
     {
         if (fullCommand is null)
         {
@@ -56,7 +56,7 @@ struct Command
         this.type = typeOfCommand;
     }
 
-    string toString()
+    string toString() const
     {
         string typestr;
         final switch (type)
@@ -106,13 +106,13 @@ struct Command
 }
 
 @safe
-pure nothrow string commandName(ref Command cmd)
+export pure nothrow string commandName(ref Command cmd)
 {
     return cmd.commandList.length > 0 ? cmd.commandList[0] : "";
 }
 
 @safe
-pure nothrow string[] commandArgs(ref Command cmd)
+export pure nothrow string[] commandArgs(ref Command cmd)
 {
     return cmd.commandList.length > 1 ? cmd.commandList[1 .. $] : [];
 }

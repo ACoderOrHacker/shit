@@ -1,4 +1,4 @@
-module shit.helper.git;
+module helper.git;
 
 import std.process;
 import std.path;

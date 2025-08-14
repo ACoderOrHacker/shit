@@ -1,4 +1,4 @@
-module shit.helper.utf;
+module helper.utf;
 
 import std.utf;
 import std.uni;

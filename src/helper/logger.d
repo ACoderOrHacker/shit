@@ -1,4 +1,4 @@
-module shit.helper.logger;
+module helper.logger;
 
 import std.stdio;
 

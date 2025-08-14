@@ -4,7 +4,7 @@ import std.json;
 import std.file : read, rename;
 import std.stdio : File;
 
-class SafeWriteException : Exception
+export class SafeWriteException : Exception
 {
     this(string msg)
     {
@@ -12,13 +12,13 @@ class SafeWriteException : Exception
     }
 }
 
-JSONValue readJSON(string path)
+export JSONValue readJSON(string path)
 {
     auto content = cast(string) read(path);
     return parseJSON(content);
 }
 
-void writeJSON(string path, JSONValue value, bool safeWrite = false)
+export void writeJSON(string path, JSONValue value, bool safeWrite = false)
 {
     File f;
     if (safeWrite)

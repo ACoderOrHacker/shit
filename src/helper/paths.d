@@ -1,4 +1,4 @@
-module shit.helper.paths;
+module helper.paths;
 
 import std.conv;
 import std.path : buildPath, dirName;

@@ -17,7 +17,7 @@ enum State
     Comment,
 }
 
-class ParseError : Exception
+export class ParseError : Exception
 {
     @safe
     this(string msg = "Parse error")
@@ -27,7 +27,7 @@ class ParseError : Exception
 }
 
 @safe
-string[] splitCommand(string s)
+export string[] splitCommand(string s)
 {
     State state = State.Delimiter;
     string[] words;

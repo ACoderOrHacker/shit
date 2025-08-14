@@ -9,11 +9,11 @@ import std.format;
 import std.json;
 import shit.executor;
 import shit.configs.global;
-import shit.helper.exit;
-import shit.helper.paths;
-import shit.helper.logger;
+import helper.exit;
+import helper.paths;
+import helper.logger;
 
-ExecuteResult builtinCd(ref GlobalConfig config, string[] args)
+export ExecuteResult builtinCd(ref GlobalConfig config, string[] args)
 {
     scope (failure)
     {
@@ -32,7 +32,7 @@ ExecuteResult builtinCd(ref GlobalConfig config, string[] args)
     return ExecuteResult(0);
 }
 
-ExecuteResult builtinExit(ref GlobalConfig config, string[] args)
+export ExecuteResult builtinExit(ref GlobalConfig config, string[] args)
 {
     try
     {
@@ -53,7 +53,7 @@ ExecuteResult builtinExit(ref GlobalConfig config, string[] args)
     return ExecuteResult(0);
 }
 
-ExecuteResult builtinEcho(ref GlobalConfig config, string[] args)
+export ExecuteResult builtinEcho(ref GlobalConfig config, string[] args)
 {
     foreach (str; args[1 .. $])
         write(str);
@@ -62,7 +62,7 @@ ExecuteResult builtinEcho(ref GlobalConfig config, string[] args)
     return ExecuteResult(0);
 }
 
-ExecuteResult builtinReload(ref GlobalConfig config, string[] args)
+export ExecuteResult builtinReload(ref GlobalConfig config, string[] args)
 {
     if (args.length != 1)
         return ExecuteResult(1);
@@ -88,7 +88,7 @@ ExecuteResult builtinReload(ref GlobalConfig config, string[] args)
     return ExecuteResult(0);
 }
 
-ExecuteResult builtinConfig(ref GlobalConfig config, string[] args)
+export ExecuteResult builtinConfig(ref GlobalConfig config, string[] args)
 {
     string key, value, cfg;
     try

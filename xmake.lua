@@ -7,7 +7,7 @@ set_description("A powerful and modern terminal")
 
 includes("@builtin/xpack")
 
-add_rules("mode.debug", "mode.release")
+add_rules("mode.debug", "mode.release", "mode.releasedbg")
 
 add_installfiles("etc/shit/*.json", {prefixdir = "etc/shit"})
 
@@ -30,27 +30,32 @@ target("conbase")
     set_kind("shared")
 
     add_options("unittests")
-    add_dcflags("-boundscheck=on", {force = true})
+    add_dcflags("-boundscheck=on", {force = true, tools = "dmd"})
+
+    -- see https://github.com/stefv/dlang_moduleinfo/tree/develop
+    --[[
+    
+    add_dcflags("-defaultlib=libphobos2.so", {force = true, tools = "dmd"})--]]
+    add_dcflags("-visibility=public", {force = true})
+
+    add_files("src/helper/**.d")
     add_files("src/shit/**.d")
-target_end()
-
-target("pkgman")
-    set_kind("shared")
-
-    add_options("unittests")
-    add_dcflags("-boundscheck=on", {force = true})
     add_files("src/pkgman/**.d")
+    add_files("src/cli/**.d")
+
+    add_packages("colored", {public = true})
     add_packages("lua", {public = true})
     add_packages("dlua", {public = true})
 target_end()
 
 target("shit")
     set_kind("binary")
-
-    add_dcflags("-boundscheck=on", {force = true})
-    add_files("src/main/**.d")
-    add_deps("conbase", "pkgman")
-    add_packages("colored")
+--[[
+    add_dcflags("-boundscheck=on", {force = true, tools = "dmd"})
+    add_dcflags("-defaultlib=libphobos2.so", {force = true, tools = "dmd"})
+--]]
+    add_files("src/app/app.d")
+    add_deps("conbase")
 target_end()
 
 xpack("shit")
@@ -74,5 +79,5 @@ xpack("shit")
     add_sourcefiles(".github/(**.yml)")
     add_sourcefiles("etc")
 
-    add_targets("shit")
+    add_targets("shit", "conbase")
 xpack_end()

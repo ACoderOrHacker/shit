@@ -3,7 +3,7 @@ module shit.initializer;
 import std.file : chdir, FileException;
 import shit.configs.global : GlobalConfig;
 
-class StartUpException : Exception
+export class StartUpException : Exception
 {
     this(string msg)
     {
@@ -11,7 +11,7 @@ class StartUpException : Exception
     }
 }
 
-void startUp(ref GlobalConfig config)
+export void startUp(ref GlobalConfig config)
 {
     try
     {

@@ -1,18 +1,18 @@
 module shit.configs.project;
 
 import std.path;
-import shit.helper.paths;
+import helper.paths;
 
-string shitFullVersion = "${VERSION}";
-string shitMajorVersion = "${VERSION_MAJOR}";
-string shitMinorVersion = "${VERSION_MINOR}";
-string shitPatchVersion = "${VERSION_ALTER}";
-string shitPlatform = "${plat}";
-string shitArchitecture = "${arch}";
-string shitOs = "${os}";
-string shitMode = "${mode}";
+enum shitFullVersion = "${VERSION}",
+    shitMajorVersion = "${VERSION_MAJOR}",
+    shitMinorVersion = "${VERSION_MINOR}",
+    shitPatchVersion = "${VERSION_ALTER}",
+    shitPlatform = "${plat}",
+    shitArchitecture = "${arch}",
+    shitOs = "${os}",
+    shitMode = "${mode}";
 
-string shitConfigsPath()
+export string shitConfigsPath()
 {
     return buildPath(dirName(dirName(executablePath())), "etc", "shit");
 }
