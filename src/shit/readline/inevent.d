@@ -1,5 +1,7 @@
 module shit.readline.inevent;
 
+import std.stdint;
+
 version (Posix)
 {
     import core.sys.posix;
@@ -20,7 +22,7 @@ else
     static assert(false, "Unsupported platform");
 }
 
-enum VirtualKey : ushort
+enum VirtualKey : uint16_t
 {
     None = 0,
     Backspace = 8,
@@ -81,7 +83,7 @@ export struct InputEvent
     @property
     bool isPrintableAscii() const
     {
-        return (cast(ushort) vkey) >= 32 && (cast(ushort) vkey) <= 126;
+        return (cast(uint16_t) vkey) >= 32 && (cast(uint16_t) vkey) <= 126;
     }
 
     @property
@@ -277,7 +279,7 @@ private:
             }
         }
 
-        version (Windows) VirtualKey translateWinKey(ushort vk, wchar ch)
+        version (Windows) VirtualKey translateWinKey(uint16_t vk, wchar ch)
         {
             if (vk >= 0x70 && vk <= 0x87)
                 return cast(VirtualKey)(VirtualKey.F1 + (vk - 0x70));

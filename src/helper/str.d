@@ -1,6 +1,8 @@
 module helper.str;
 
-dstring insert(dstring original, ulong pos, dchar ch)
+import std.stdint;
+
+dstring insert(dstring original, uint32_t pos, dchar ch)
 {
     return original[0 .. pos] ~ ch ~ original[pos .. $];
 }

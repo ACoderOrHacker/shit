@@ -1,5 +1,6 @@
 module shit.readline.rldefault;
 
+import std.stdint;
 import std.stdio;
 import std.string;
 import std.conv : to;
@@ -15,16 +16,15 @@ import shit.readline.cbreak;
 import shit.readline.inevent;
 import shit.readline.baserl;
 import shit.readline.wcwidth;
-import shit.readline.console;
 import helper.str;
 
 export class DefaultReadline : Readline
 {
 private:
     Cbreak controler;
-    ulong beforeCursorDcharCount;
-    ulong lastResultWidth;
-    ulong lastAfterCursorWidth;
+    uint32_t beforeCursorDcharCount;
+    uint32_t lastResultWidth;
+    uint32_t lastAfterCursorWidth;
 
     void writeInfoOfLastResult()
     {

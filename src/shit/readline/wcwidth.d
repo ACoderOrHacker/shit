@@ -1,12 +1,14 @@
 module shit.readline.wcwidth;
 
+import std.stdint;
+
 /// See https://github.com/termux/wcwidth/blob/master/wcwidth.c#L21
 /// Just a translation from there
 
 private struct Interval
 {
-    uint start;
-    uint end;
+    uint32_t start;
+    uint32_t end;
 }
 
 private immutable Interval[] combining = [
@@ -502,7 +504,7 @@ private bool validateSorted(immutable Interval[] table) pure nothrow @nogc @safe
 }
 
 // binary search
-private bool bisearch(uint u, const Interval[] intervals)
+private bool bisearch(uint32_t u, const Interval[] intervals)
 {
     size_t min = 0;
     size_t max = intervals.length;
@@ -526,7 +528,7 @@ private bool bisearch(uint u, const Interval[] intervals)
     return false;
 }
 
-export int wcwidth(uint u)
+export int wcwidth(uint32_t u)
 {
     if (u == 0)
         return 0;
@@ -555,12 +557,12 @@ class UnknownCharWidthException : Exception
     }
 }
 
-export uint wswidth(S)(S str) if (isSomeString!S)
+export uint32_t wswidth(S)(S str) if (isSomeString!S)
 {
-    uint sum = 0;
+    uint32_t sum = 0;
     foreach (i, c; str)
     {
-        int n = wcwidth(cast(uint) c);
+        int n = wcwidth(cast(uint32_t) c);
         if (n < 0)
             throw new UnknownCharWidthException(
                 "bad char width: in index `" ~ i.to!string ~ "`, string `" ~ str.to!string ~ "`");
