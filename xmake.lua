@@ -15,7 +15,6 @@ set_configdir("src/shit/configs")
 add_configfiles("src/shit/configs/project.d.in")
 
 add_requires("lua 5.3.6", {alias = "lua"})
-add_requires("dub::colored", {alias = "colored"})
 add_requires("dub::dlua", {alias = "dlua"})
 
 add_includedirs("src")
@@ -36,11 +35,11 @@ target("conbase")
     add_dcflags("-visibility=public", {force = true, tools = "dmd"})
 
     add_files("src/helper/**.d")
+    add_files("src/termcolor/**.d")
     add_files("src/shit/**.d")
     add_files("src/pkgman/**.d")
     add_files("src/cli/**.d")
 
-    add_packages("colored", {public = true})
     add_packages("lua", {public = true})
     add_packages("dlua", {public = true})
 target_end()

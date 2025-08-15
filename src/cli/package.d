@@ -8,7 +8,7 @@ import std.conv : to;
 import std.algorithm : startsWith, endsWith;
 import std.ascii : isControl;
 import std.utf;
-import colored;
+import termcolor;
 import helper;
 import helper.signal;
 import shit.configs;
@@ -40,11 +40,17 @@ export void executeCmdLine(ref GlobalConfig config, string home)
         gitBranch = null;
     }
 
-    (getUserName() ~ "@" ~ getHostName() ~ " ").green.write;
-    showPath.lightBlue.write;
     string branchInfo = gitBranch == null ? "" : " (" ~ gitBranch ~ ")";
-    branchInfo.yellow.writeln;
 
+    stdout.setColor(green)
+        .write(getUserName(), "@", getHostName(), " ");
+    stdout.setColor(reset)
+        .setColor(brightBlue)
+        .write(showPath);
+    stdout.setColor(reset)
+        .setColor(yellow)
+        .writeln(branchInfo);
+    stdout.setColor(reset);
     string indicatorOfCommand = isAdmin() ? "# " : "$ ";
     stderr.write(indicatorOfCommand);
     stderr.flush();
