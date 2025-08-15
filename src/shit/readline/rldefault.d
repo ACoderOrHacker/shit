@@ -106,6 +106,7 @@ public:
             color = "\x1b[37m";
         }
 
+        stderr.write("\x1b[?25l");
         if (lastAfterCursorWidth != 0)
             stderr.write("\x1b[" ~ lastAfterCursorWidth.to!string ~ "C");
         foreach (_; 0 .. lastResultWidth)
@@ -116,6 +117,7 @@ public:
         auto width = wswidth(super.result[beforeCursorDcharCount .. $]);
         if (width != 0)
             stderr.write("\x1b[" ~ width.to!string ~ "D");
+        stderr.write("\x1b[?25h");
         stderr.flush();
     }
 }
