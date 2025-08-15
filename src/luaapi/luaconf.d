@@ -6,6 +6,7 @@
 
 import core.stdc.limits;
 import core.stdc.stddef;
+import luaapi.lua;
 
 extern (C):
 
@@ -213,8 +214,6 @@ enum LUA_IGMARK = "-";
 /*
 ** More often than not the libs go together with the core.
 */
-enum LUALIB_API = LUA_API;
-enum LUAMOD_API = LUA_API;
 
 /*
 @@ LUAI_FUNC is a mark for all extern functions that are not to be
@@ -372,7 +371,7 @@ alias lua_str2number = strtod;
 
 /* The following definitions are good for most cases here */
 
-enum LUAI_UACINT = LUA_INTEGER;
+alias LUAI_UACINT = LUA_INTEGER;
 
 extern (D) auto lua_integer2str(T0, T1, T2)(auto ref T0 s, auto ref T1 sz, auto ref T2 n)
 {
