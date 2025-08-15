@@ -14,8 +14,7 @@ add_installfiles("etc/shit/*.json", {prefixdir = "etc/shit"})
 set_configdir("src/shit/configs")
 add_configfiles("src/shit/configs/project.d.in")
 
-add_requires("lua 5.3.6", {alias = "lua"})
-add_requires("dub::dlua", {alias = "dlua"})
+add_requires("lua 5.4.7", {alias = "lua"})
 
 add_includedirs("src")
 
@@ -41,7 +40,6 @@ target("conbase")
     add_files("src/cli/**.d")
 
     add_packages("lua", {public = true})
-    add_packages("dlua", {public = true})
 target_end()
 
 target("shit")
