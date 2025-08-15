@@ -33,10 +33,7 @@ target("conbase")
     add_dcflags("-boundscheck=on", {force = true, tools = "dmd"})
 
     -- see https://github.com/stefv/dlang_moduleinfo/tree/develop
-    --[[
-    
-    add_dcflags("-defaultlib=libphobos2.so", {force = true, tools = "dmd"})--]]
-    add_dcflags("-visibility=public", {force = true})
+    add_dcflags("-visibility=public", {force = true, tools = "dmd"})
 
     add_files("src/helper/**.d")
     add_files("src/shit/**.d")
@@ -50,10 +47,7 @@ target_end()
 
 target("shit")
     set_kind("binary")
---[[
     add_dcflags("-boundscheck=on", {force = true, tools = "dmd"})
-    add_dcflags("-defaultlib=libphobos2.so", {force = true, tools = "dmd"})
---]]
     add_files("src/app/app.d")
     add_deps("conbase")
 target_end()

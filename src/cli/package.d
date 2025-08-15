@@ -50,7 +50,7 @@ export void executeCmdLine(ref GlobalConfig config, string home)
     stderr.flush();
 
     // Read command from stdin
-    string command = new DefaultReadline(indicatorOfCommand).read().toUTF8;
+    string command = new DefaultReadline().read().toUTF8;
 
     stderr.writeln(); // \n is ignored so we must add it
 

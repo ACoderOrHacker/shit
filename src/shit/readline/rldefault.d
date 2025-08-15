@@ -15,21 +15,30 @@ import shit.readline.cbreak;
 import shit.readline.inevent;
 import shit.readline.baserl;
 import shit.readline.wcwidth;
+import shit.readline.console;
 import helper.str;
 
 export class DefaultReadline : Readline
 {
 private:
     Cbreak controler;
-    string indicator;
     ulong beforeCursorDcharCount;
+    ulong lastResultWidth;
+    ulong lastAfterCursorWidth;
+
+    void writeInfoOfLastResult()
+    {
+        lastResultWidth = wswidth(super.result);
+        lastAfterCursorWidth = wswidth(super.result[beforeCursorDcharCount .. $]);
+    }
 
 public:
-    export this(string indicator)
+    export this()
     {
         beforeCursorDcharCount = 0;
+        lastResultWidth = 0;
+        lastAfterCursorWidth = 0;
         controler = new Cbreak;
-        this.indicator = indicator;
         super(stdin);
     }
 
@@ -64,10 +73,7 @@ public:
         case VirtualKey.Backspace:
             if (beforeCursorDcharCount == 0)
                 break;
-            foreach (_; 0 .. wcwidth(super.result[beforeCursorDcharCount - 1]))
-            {
-                stderr.write("\x1b[D\x1b[P");
-            }
+            writeInfoOfLastResult();
             super.result = cast(dstring)(cast(dchar[]) super.result)
                 .remove(beforeCursorDcharCount - 1);
             --beforeCursorDcharCount;
@@ -82,6 +88,7 @@ public:
 
     override void insertChar()
     {
+        writeInfoOfLastResult();
         super.result = insert(super.result, beforeCursorDcharCount, super.iterator);
         ++beforeCursorDcharCount;
     }
@@ -99,15 +106,16 @@ public:
             color = "\x1b[37m";
         }
 
-        stderr.write("\x1b[0m");
-        stderr.write("\r");
-        stderr.write("\x1b[" ~ wswidth(indicator).to!string ~ "C");
-        stderr.write("\x1b[0K");
+        if (lastAfterCursorWidth != 0)
+            stderr.write("\x1b[" ~ lastAfterCursorWidth.to!string ~ "C");
+        foreach (_; 0 .. lastResultWidth)
+        {
+            stderr.write("\x1b[D\x1b[P");
+        }
         stderr.write(color, super.result, "\x1b[0m");
-        long backn = wswidth(super.result[beforeCursorDcharCount .. $]);
-
-        if (backn != 0)
-            stderr.write("\x1b[" ~ backn.to!string ~ "D");
+        auto width = wswidth(super.result[beforeCursorDcharCount .. $]);
+        if (width != 0)
+            stderr.write("\x1b[" ~ width.to!string ~ "D");
         stderr.flush();
     }
 }
