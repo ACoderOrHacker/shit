@@ -1,7 +1,7 @@
 set_xmakever("2.8.7")
 set_project("shit")
 
-set_version("0.1.0")
+set_version("0.1.1")
 
 set_description("A powerful and modern terminal")
 
