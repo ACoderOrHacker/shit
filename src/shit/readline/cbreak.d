@@ -65,7 +65,7 @@ private:
         }
         else version (Windows)
         {
-            if (SetConsoleMode(hStdin, settings) == 0)
+            if (SetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), settings) == 0)
             {
                 throw new CbreakException("Failed to set console mode");
             }
