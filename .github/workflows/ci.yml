@@ -49,6 +49,9 @@ jobs:
         uses: dlang-community/setup-dlang@v2
         with:
           compiler: dmd-latest
+    
+      - name: Test D Compiler
+        run: dmd --version
 
       - name: Install Xmake
         uses: xmake-io/github-action-setup-xmake@v1
