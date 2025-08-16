@@ -24,11 +24,7 @@ jobs:
           - os: windows-latest
             arch: x86
           - os: windows-latest
-            arch: arm
-          - os: windows-latest
             arch: arm64
-          - os: ubuntu-latest
-            arch: i386
           - os: ubuntu-latest
             arch: x86_64
           - os: ubuntu-latest
