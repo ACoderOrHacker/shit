@@ -263,28 +263,22 @@ private string createLegacyColor(string name, int n)
         return (cast(char) toUpper(name[0])) ~ name[1 .. $];
     }
 
-    string color = "@property\n" ~
-        "Legacy16Color " ~ name ~ "() { return Legacy16Color(" ~ n.to!string ~ "); }\n";
+    string color = "enum " ~ name ~ " = Legacy16Color(" ~ n.to!string ~ ");\n";
 
-    string onColor = "@property\n" ~
-        "Legacy16Color on" ~ getUpperName() ~ "() { return Legacy16Color(" ~ (n + 10)
-        .to!string ~ "); }\n";
+    string onColor = "enum on" ~ getUpperName() ~ " = Legacy16Color(" ~ (n + 10).to!string ~ ");\n";
 
-    string brightColor = "@property\n" ~
-        "Legacy16Color bright" ~ getUpperName() ~ "() { return Legacy16Color(" ~ (n + 60)
-        .to!string ~ "); }\n";
+    string brightColor = "enum bright" ~ getUpperName() ~ " = Legacy16Color(" ~ (n + 60)
+        .to!string ~ ");\n";
 
-    string onBrightColor = "@property\n" ~
-        "Legacy16Color onBright" ~ getUpperName() ~ "() { return Legacy16Color(" ~ (n + 70)
-        .to!string ~ "); }\n";
+    string onBrightColor = "enum onBright" ~ getUpperName() ~ " = Legacy16Color(" ~ (n + 70)
+        .to!string ~ ");\n";
 
     return color ~ onColor ~ brightColor ~ onBrightColor;
 }
 
 private string createLegacyStyle(string name, int n)
 {
-    return "@property\n"
-        ~ "Legacy16Color " ~ name ~ "() { return Legacy16Color(" ~ n.to!string ~ "); }\n";
+    return "enum " ~ name ~ " = Legacy16Color(" ~ n.to!string ~ ");\n";
 }
 
 // Legacy16 color definations
