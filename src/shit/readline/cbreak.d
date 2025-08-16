@@ -2,7 +2,7 @@ module shit.readline.cbreak;
 
 version (Posix)
 {
-    import core.sys.posix;
+    import core.sys.posix.termios;
 }
 else version (Windows)
 {

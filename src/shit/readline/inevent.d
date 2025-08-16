@@ -1,14 +1,17 @@
 module shit.readline.inevent;
 
 import std.stdint;
+import std.ascii : isAlpha;
+import std.conv : to;
 
 version (Posix)
 {
-    import core.sys.posix;
+    import core.sys.posix.unistd;
+    import core.sys.posix.sys.select;
 
     struct PlatformEvent
     {
-        string code; // ansi escape sequence
+        char[] code; // ansi escape sequence
     }
 }
 else version (Windows)
@@ -106,48 +109,118 @@ export class EventReader
 private:
     version (Posix)
     {
+        enum ESCAPE_TIMEOUT_MS = 50;
+
+        string readEscapeSequence()
+        {
+            ubyte[] buffer;
+            buffer.length = 8;
+            ulong pos = 0;
+            buffer[0] = '\x1b';
+            ++pos;
+
+            bool readOSCEscape = false;
+
+            fd_set fds;
+            timeval tv;
+
+            while (true)
+            {
+                FD_ZERO(&fds);
+                FD_SET(STDIN_FILENO, &fds);
+
+                tv.tv_sec = 0;
+                tv.tv_usec = ESCAPE_TIMEOUT_MS * 1000;
+
+                if (select(STDIN_FILENO + 1, &fds, null, null, &tv) <= 0)
+                {
+                    break;
+                }
+
+                ubyte ch;
+                if (!.read(STDIN_FILENO, &ch, 1))
+                    break;
+
+                if (buffer.length < (pos + 2)) // actually, it's (buffer.length - 1) < (pos+ 1)
+                    buffer.length = (buffer.length * 1.5).to!ulong; // length *= 1.5
+
+                if (isAlpha(ch) || ch == '~' || ch == '\x07')
+                {
+                    buffer[pos] = ch;
+                    ++pos;
+                    break;
+                }
+
+                if (readOSCEscape && ch == '\\')
+                {
+                    buffer[pos] = ch;
+                    ++pos;
+                    readOSCEscape = false; // actually, it has no effect because we jump out
+                    // just for something bad :)
+                    break;
+                }
+
+                if (ch == '\x1b')
+                {
+                    readOSCEscape = true;
+                }
+
+                buffer[pos] = ch;
+
+                pos++;
+            }
+
+            return cast(string) buffer[0 .. pos].idup;
+        }
+
         InputEvent readPosixEvent()
         {
-            ubyte[8] buffer;
+            ubyte[] buffer;
             InputEvent event;
 
-            read(0, buffer.ptr, 1);
+            buffer.length = 8;
+
+            
+
+            .read(0, buffer.ptr, 1);
+            event.raw.code.length = 1;
             event.raw.code[0] = cast(char) buffer[0];
 
             if (buffer[0] == 0x1B) // ESC
             {
-                timeval timeout = [0, 100000]; // 100ms
-                fd_set fds;
-                FD_ZERO(&fds);
-                FD_SET(0, &fds);
-
-                int i = 1;
-                for (; i < 8; i++)
-                {
-                    if (select(1, &fds, null, null, &timeout) <= 0)
-                        break;
-
-                    read(0, buffer.ptr + i, 1);
-
-                    if (buffer[i] >= 0x40 && buffer[i] <= 0x7E)
-                        break;
-                }
+                event.raw.code = readEscapeSequence().dup;
             }
 
-            event.raw = cast(string) buffer[0 .. i];
-            parsePosixEvent(buffer[0 .. i], event);
+            parsePosixEvent(cast(const(ubyte)[]) event.raw.code, event);
             return event;
         }
 
         void parsePosixEvent(const(ubyte)[] seq, ref InputEvent event)
         {
-            event.vkey = VKey.None;
+            event.vkey = VirtualKey.None;
 
             if (seq.length == 1)
             {
                 if (seq[0] >= 32 && seq[0] <= 126)
                 {
-                    event.vkey = cast(VKey) seq[0];
+                    event.vkey = cast(VirtualKey) seq[0];
+                }
+                switch (seq[0])
+                {
+                case 0x08:
+                case 0x7F:
+                    event.vkey = VirtualKey.Backspace;
+                    break;
+                case 0x09:
+                    event.vkey = VirtualKey.Tab;
+                    break;
+                case 0x0A:
+                case 0X0D:
+                    event.vkey = VirtualKey.Enter;
+                    break;
+                default:
+                    event.vkey = cast(VirtualKey) seq[0];
+                    break;
                 }
                 return;
             }
@@ -160,82 +233,82 @@ private:
                     switch (s)
                     {
                     case "A":
-                        event.vkey = VKey.Up;
+                        event.vkey = VirtualKey.Up;
                         break;
                     case "B":
-                        event.vkey = VKey.Down;
+                        event.vkey = VirtualKey.Down;
                         break;
                     case "C":
-                        event.vkey = VKey.Right;
+                        event.vkey = VirtualKey.Right;
                         break;
                     case "D":
-                        event.vkey = VKey.Left;
+                        event.vkey = VirtualKey.Left;
                         break;
                     case "H":
-                        event.vkey = VKey.Home;
+                        event.vkey = VirtualKey.Home;
                         break;
                     case "F":
-                        event.vkey = VKey.End;
+                        event.vkey = VirtualKey.End;
                         break;
                     case "5~":
-                        event.vkey = VKey.PageUp;
+                        event.vkey = VirtualKey.PageUp;
                         break;
                     case "6~":
-                        event.vkey = VKey.PageDown;
+                        event.vkey = VirtualKey.PageDown;
                         break;
                     case "2~":
-                        event.vkey = VKey.Insert;
+                        event.vkey = VirtualKey.Insert;
                         break;
                     case "3~":
-                        event.vkey = VKey.Delete;
+                        event.vkey = VirtualKey.Delete;
                         break;
                     case "P":
-                        event.vkey = VKey.F1;
+                        event.vkey = VirtualKey.F1;
                         break;
                     case "Q":
-                        event.vkey = VKey.F2;
+                        event.vkey = VirtualKey.F2;
                         break;
                     case "R":
-                        event.vkey = VKey.F3;
+                        event.vkey = VirtualKey.F3;
                         break;
                     case "S":
-                        event.vkey = VKey.F4;
+                        event.vkey = VirtualKey.F4;
                         break;
                     case "11~":
-                        event.vkey = VKey.F1;
+                        event.vkey = VirtualKey.F1;
                         break;
                     case "12~":
-                        event.vkey = VKey.F2;
+                        event.vkey = VirtualKey.F2;
                         break;
                     case "13~":
-                        event.vkey = VKey.F3;
+                        event.vkey = VirtualKey.F3;
                         break;
                     case "14~":
-                        event.vkey = VKey.F4;
+                        event.vkey = VirtualKey.F4;
                         break;
                     case "15~":
-                        event.vkey = VKey.F5;
+                        event.vkey = VirtualKey.F5;
                         break;
                     case "17~":
-                        event.vkey = VKey.F6;
+                        event.vkey = VirtualKey.F6;
                         break;
                     case "18~":
-                        event.vkey = VKey.F7;
+                        event.vkey = VirtualKey.F7;
                         break;
                     case "19~":
-                        event.vkey = VKey.F8;
+                        event.vkey = VirtualKey.F8;
                         break;
                     case "20~":
-                        event.vkey = VKey.F9;
+                        event.vkey = VirtualKey.F9;
                         break;
                     case "21~":
-                        event.vkey = VKey.F10;
+                        event.vkey = VirtualKey.F10;
                         break;
                     case "23~":
-                        event.vkey = VKey.F11;
+                        event.vkey = VirtualKey.F11;
                         break;
                     case "24~":
-                        event.vkey = VKey.F12;
+                        event.vkey = VirtualKey.F12;
                         break;
                     default:
                         break;
@@ -246,7 +319,7 @@ private:
             {
                 if (seq[1] >= 32 && seq[1] <= 126)
                 {
-                    event.vkey = cast(VKey) seq[1];
+                    event.vkey = cast(VirtualKey) seq[1];
                 }
             }
         }

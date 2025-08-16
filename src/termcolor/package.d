@@ -7,7 +7,7 @@ import std.ascii : toUpper;
 
 version (Posix)
 {
-    static import core.sys.posix.unistd;
+    static import unistd = core.sys.posix.unistd;
 
     alias FileDescriptor = int;
 }
@@ -27,7 +27,7 @@ private bool isatty(File stream)
 {
     version (Posix)
     {
-        return isatty(stream.fileno()) == 1;
+        return unistd.isatty(stream.fileno()) == 1;
     }
     else version (Windows)
     {
