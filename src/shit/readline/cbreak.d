@@ -3,6 +3,7 @@ module shit.readline.cbreak;
 version (Posix)
 {
     import core.sys.posix.termios;
+    import core.sys.posix.unistd;
 }
 else version (Windows)
 {
@@ -23,80 +24,91 @@ export class CbreakException : Exception
 
 export class Cbreak
 {
-    this()
+private:
+    version (Posix)
     {
-        cbreak();
+        alias Config = termios;
     }
-
-    ~this()
+    version (Windows)
     {
-        restore();
+        alias Config = DWORD;
     }
+    Config original;
+    bool isCbreak;
 
-    final void cbreak()
+    void saveCurrent()
     {
         version (Posix)
         {
-            if (tcgetattr(0, &originalTermios) != 0)
+            if (tcgetattr(STDIN_FILENO, &original) != 0)
             {
                 throw new CbreakException("Failed to get terminal attributes");
             }
+        }
+        else version (Windows)
+        {
+            if (GetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), &original) == 0)
+            {
+                throw new CbreakException("Failed to get console mode");
+            }
+        }
+    }
 
-            termios newTermios = originalTermios;
-            newTermios.c_lflag &= ~(ICANON | ECHO);
-            newTermios.c_cc[VMIN] = 1;
-            newTermios.c_cc[VTIME] = 0;
-
-            if (tcsetattr(0, TCSANOW, &newTermios) != 0)
+    void applySettings(Config settings)
+    {
+        version (Posix)
+        {
+            if (tcsetattr(STDIN_FILENO, TCSANOW, &settings) != 0)
             {
                 throw new CbreakException("Failed to set terminal attributes");
             }
         }
-        version (Windows)
+        else version (Windows)
         {
-            hStdin = GetStdHandle(STD_INPUT_HANDLE);
-            if (hStdin == INVALID_HANDLE_VALUE)
-            {
-                throw new CbreakException("Failed to get stdin handle");
-            }
-
-            if (GetConsoleMode(hStdin, &originalMode) == 0)
-            {
-                throw new CbreakException("Failed to get console mode");
-            }
-
-            DWORD newMode = originalMode & ~(ENABLE_ECHO_INPUT | ENABLE_LINE_INPUT);
-            if (SetConsoleMode(hStdin, newMode) == 0)
+            if (SetConsoleMode(hStdin, settings) == 0)
             {
                 throw new CbreakException("Failed to set console mode");
             }
         }
     }
 
-    final void restore()
+public:
+    this()
     {
+        saveCurrent();
+    }
+
+    ~this()
+    {
+        applySettings(original);
+    }
+
+    final void cbreak()
+    {
+        if (isCbreak)
+            return;
+        Config settings;
         version (Posix)
         {
-            tcsetattr(0, TCSANOW, &originalTermios);
-        }
+            settings = original;
+            settings.c_lflag &= ~(ICANON | ECHO);
 
+            settings.c_cc[VMIN] = 1;
+            settings.c_cc[VTIME] = 0;
+        }
         version (Windows)
         {
-            if (hStdin != INVALID_HANDLE_VALUE)
-            {
-                SetConsoleMode(hStdin, originalMode);
-            }
+            settings = original & ~(ENABLE_ECHO_INPUT | ENABLE_LINE_INPUT);
         }
+        applySettings(settings);
+        isCbreak = true;
     }
 
-private:
-    version (Posix)
+    final void restore()
     {
-        termios originalTermios;
-    }
-    version (Windows)
-    {
-        HANDLE hStdin;
-        DWORD originalMode;
+        if (!isCbreak)
+            return;
+        applySettings(original);
+        isCbreak = false;
     }
 }

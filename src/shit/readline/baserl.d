@@ -50,6 +50,8 @@ public:
         VirtualKey endKey = VirtualKey.Enter)
     {
         enterReadline();
+        scope (exit)
+            exitReadline();
         while (true)
         {
             auto result = reader.read();
@@ -70,8 +72,6 @@ public:
 
             typingCommand();
         }
-        scope (exit)
-            exitReadline();
 
         return result;
     }
