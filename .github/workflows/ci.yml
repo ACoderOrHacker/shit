@@ -25,6 +25,10 @@ jobs:
             arch: x86
           - os: windows-latest
             arch: arm64
+          - os: windows-latest
+            arch: arm64
+          - os: ubuntu-latest
+            arch: i386
           - os: ubuntu-latest
             arch: x86_64
           - os: ubuntu-latest
@@ -33,9 +37,9 @@ jobs:
             arch: armv7
           - os: ubuntu-latest
             arch: armv7s
-          - os: macos-latest
+          - os: macos-13
             arch: x86_64
-          - os: macos-latest
+          - os: macos-13
             arch: arm64
       fail-fast: false
     runs-on: ${{matrix.os}}
