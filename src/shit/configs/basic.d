@@ -1,6 +1,6 @@
 module shit.configs.basic;
 
-import std.json;
+public import std.json;
 import std.file : read, rename;
 import std.stdio : File;
 

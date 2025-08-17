@@ -11,7 +11,7 @@ public import shit.configs.project;
 
 export class GlobalConfigNotFoundException : Exception
 {
-    pure nothrow this(string msg)
+    this(string msg)
     {
         super(msg);
     }
@@ -19,7 +19,7 @@ export class GlobalConfigNotFoundException : Exception
 
 export class BadGlobalConfigException : Exception
 {
-    pure nothrow this(string msg)
+    this(string msg)
     {
         super(msg);
     }
@@ -43,7 +43,8 @@ export GlobalConfig getGlobalConfig()
     }
     catch (Exception e)
     {
-        throw new GlobalConfigNotFoundException("Unable to read global configuration file");
+        throw new GlobalConfigNotFoundException(
+            "Unable to read global configuration file: " ~ e.msg);
     }
 
     try

@@ -51,7 +51,7 @@ bool isAdmin()
 
         if (b)
         {
-            if (!CheckTokenMembership(NULL, AdministratorsGroup, &b))
+            if (!CheckTokenMembership(null, AdministratorsGroup, &b))
             {
                 b = FALSE;
             }
