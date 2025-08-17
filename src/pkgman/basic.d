@@ -210,12 +210,23 @@ export class Package
 
     void install()
     {
-        ArchiveManager.unarchive(file_, buildPath(packagesPath, baseName(file_, extension(file_))));
+        ArchiveManager.unarchive(file_, extensionPath);
+    }
+
+    void uninstall()
+    {
+        rmdirRecurse(extensionPath);
     }
 
     void writeDefaultPackage(string pkgtype)
     {
         writePackage(defaultPackage(pkgtype));
+    }
+
+    @property
+    string extensionPath()
+    {
+        return buildPath(packagesPath, baseName(file_, extension(file_)));
     }
 
     private string file_;
