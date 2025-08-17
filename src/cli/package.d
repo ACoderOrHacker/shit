@@ -18,7 +18,7 @@ import shit.executor;
 import shit.command;
 import shit.readline;
 import pkgman.basic;
-import pkgman.style;
+import pkgman.configs;
 
 @property
 string home()
@@ -123,16 +123,39 @@ export int replMain(ref GlobalConfig globalConfig)
     // Run runners
     try
     {
+        PkgmanConfig pkgconfig = readPkgmanConfig();
         shared(Runners) runners = getRunners();
-        foreach (runner; runners)
+
+        foreach (i, pkg; pkgconfig.enablePackages)
         {
-            runner.run();
+            string path = buildPath(packagesPath, pkg);
+            string pkgtype = cast(string) read(buildPath(path, ".pkgtype"));
+
+            if (pkgtype !in runners)
+            {
+                log("unsupported package type: " ~ pkgtype);
+                break;
+            }
+
+            runners[pkgtype].run(pkg, path);
         }
     }
     catch (ExtensionRunException e)
     {
         log("error when running extensions...");
         log("  details: " ~ e.msg);
+    }
+    catch (BadPkgmanConfigException e)
+    {
+        log("bad package configure: " ~ e.msg);
+    }
+    catch (PkgmanConfigNotFoundException e)
+    {
+        log("pkgman configure not found: " ~ e.msg);
+    }
+    catch (FileException e)
+    {
+        log("bad read for .pkgtype: " ~ e.msg);
     }
 
     try

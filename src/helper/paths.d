@@ -5,7 +5,7 @@ import std.path : buildPath, dirName;
 
 class ExecutableNotFoundException : Exception
 {
-    pure nothrow this(string msg)
+    this(string msg)
     {
         super(msg);
     }
@@ -13,7 +13,7 @@ class ExecutableNotFoundException : Exception
 
 class HomeNotFoundException : Exception
 {
-    pure nothrow this(string msg)
+    this(string msg)
     {
         super(msg);
     }

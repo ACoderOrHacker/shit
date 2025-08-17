@@ -14,7 +14,7 @@ class StylePackageInfo : PackageInfo
     string[string] styles;
 }
 
-class StylePackage : Package!"style"
+class StylePackage : Package
 {
     final this(string file)
     {
@@ -52,94 +52,39 @@ class StylePackage : Package!"style"
         }
     }
 
-    override void install()
+    override PackageInfo defaultPackage(string pkgtype)
     {
-        StylePackageInfo styleinfo = cast(StylePackageInfo) this.readPackage();
-        assert(styleinfo !is null, "Style implements bad");
+        PackageInfo info = super.defaultPackage(pkgtype);
+        StylePackageInfo styleinfo = cast(StylePackageInfo) info;
 
-        string etcPath = shitConfigsPath();
-        string stylesPath = buildPath(etcPath, "styles");
-        foreach (key, value; styleinfo.styles)
-        {
-            if (!key.endsWith(".lua"))
-            {
-                // not lua extension
-                throw new PackageInstallException(
-                    "on package `" ~ key ~ "`: Not a valid style extension (Lua file)");
-            }
-            string styleFile = buildPath(stylesPath, key);
+        styleinfo.styles["main.lua"] = "";
 
-            try
-            {
-                write(styleFile, cast(ubyte[]) value);
-            }
-            catch (FileException e)
-            {
-                throw new PackageInstallException("on package `" ~ key ~ "`: " ~ e.msg);
-            }
-        }
-
-    }
-}
-
-private string[] getStyles()
-{
-    JSONValue value;
-    string[] styles;
-    try
-    {
-        value = readJSON(buildPath(shitConfigsPath(), "styles", "config.json"));
-    }
-    catch (FileException e)
-    {
-        throw new ExtensionRunException("styles configure file not found: " ~ e.msg);
-    }
-    catch (JSONException e)
-    {
-        throw new ExtensionRunException("bad styles configure file");
+        return info;
     }
 
-    try
+    PackageInfo defaultPackage()
     {
-        JSONValue stylesV = value["styles"];
-        if (stylesV.type != JSONType.array)
-            throw new ExtensionRunException("styles configure file: styles is not an array");
-
-        JSONValue[] stylesValue = stylesV.get!(JSONValue[]);
-        styles.length = stylesValue.length;
-
-        foreach (i, styleValue; stylesValue)
-        {
-            if (styleValue.type != JSONType.string)
-            {
-                throw new ExtensionRunException(
-                    "styles configure file: index `" ~ i.to!string ~ "` is not a string");
-            }
-            styles[i] = styleValue.get!string;
-        }
-    }
-    catch (JSONException e)
-    {
-        throw new ExtensionRunException(e.msg);
+        return this.defaultPackage("style");
     }
 
-    return styles;
+    void writeDefaultPackage() {
+        writePackage(defaultPackage());
+    }
 }
 
 class StyleExtensionRunner : ExtensionRunner
 {
-    private void runOneStyleFile(string name) shared
+    private void runOneStyleFile(string name, string file) shared
     {
-        string file = buildPath(shitConfigsPath(), "styles", name ~ ".lua");
         if (!exists(file))
-            throw new ExtensionRunException("extension `" ~ name ~ "`(file " ~ file ~ ") not found");
+            throw new ExtensionRunException("extension `" ~ name ~"`(file " ~ file ~ ") not found");
 
         lua_State* extension = luaL_newstate();
         luaL_openlibs(extension);
 
         if (luaL_dofile(extension, (file ~ "\0").ptr)) // oh my god! Damn!
-        // the \0 must add because lua is written by C
-        {
+            // the \0 must add because lua is written by C
+            {
             throw new ExtensionRunException("lua execute error: " ~ lua_tostring(extension, -1)
                     .to!string);
         }
@@ -147,18 +92,14 @@ class StyleExtensionRunner : ExtensionRunner
         lua_close(extension);
     }
 
-    override void run() shared
+    override void run(string packageName, string packagePath) shared
     {
-        string[] styles = getStyles();
-        foreach (style; styles)
-        {
-            runOneStyleFile(style);
-        }
+        runOneStyleFile(packageName, buildPath(packagePath, "styles", "main.lua"));
     }
 }
 
 static this()
 {
     new ExtensionRunnerRegistry()
-        .register!StyleExtensionRunner();
+        .register!StyleExtensionRunner("style");
 }

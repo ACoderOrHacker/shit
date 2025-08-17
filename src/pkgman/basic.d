@@ -1,10 +1,13 @@
 module pkgman.basic;
 
-public import std.zip;
-public import std.datetime;
+import std.datetime;
 import std.file;
+import std.path;
 import std.json;
 import std.conv;
+import shit.configs.project;
+import pkgman.configs;
+public import pkgman.archive;
 
 export class BadPackageFileException : Exception
 {
@@ -58,7 +61,7 @@ export class PackageInfo
     string license;
 }
 
-export class Package(string Pkgtype)
+export class Package
 {
     protected void addMember(T)(ZipArchive ar, string name, T data)
     {
@@ -84,11 +87,11 @@ export class Package(string Pkgtype)
     {
     }
 
-    protected PackageInfo defaultPackage()
+    protected PackageInfo defaultPackage(string pkgtype)
     {
         PackageInfo info = createPackageInfo();
 
-        info.type = Pkgtype;
+        info.type = pkgtype;
         info.name = "";
         info.ver = "";
         info.desc = "";
@@ -207,12 +210,12 @@ export class Package(string Pkgtype)
 
     void install()
     {
-        assert(false, "Implementation error: not implemented `install` function for Package");
+        ArchiveManager.unarchive(file_, buildPath(packagesPath, baseName(file_, extension(file_))));
     }
 
-    void writeDefaultPackage()
+    void writeDefaultPackage(string pkgtype)
     {
-        writePackage(defaultPackage());
+        writePackage(defaultPackage(pkgtype));
     }
 
     private string file_;
@@ -220,11 +223,12 @@ export class Package(string Pkgtype)
 
 interface ExtensionRunner
 {
-    void run() shared;
+    void run(string /* package name */ ,
+        string /* package path */ ) shared;
 }
 
 /// Runner API
-alias Runners = ExtensionRunner[];
+alias Runners = ExtensionRunner[string];
 
 shared(Runners) runners;
 
@@ -235,12 +239,10 @@ export ref shared(Runners) getRunners()
 
 export class ExtensionRunnerRegistry
 {
-    ExtensionRunnerRegistry register(Runner)()
+    ExtensionRunnerRegistry register(Runner)(string name)
     {
         ref shared(Runners) runners_ = getRunners();
-        auto index = runners_.length;
-        runners_.length += 1;
-        runners_[index] = new Runner;
+        runners_[name] = new Runner;
 
         return this;
     }
