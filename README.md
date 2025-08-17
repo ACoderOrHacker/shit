@@ -8,6 +8,12 @@ A powerful and modern terminal written in [D Programming Language](https://dlang
 SHIT - shell itself :)
 
 ## Installation
+
+This project depends on:
+- [DMD](https://dlang.org)
+- [Xmake](https://xmake.io)
+- A C compiler
+
 ```
 xmake build
 xmake install

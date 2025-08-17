@@ -14,7 +14,7 @@ add_installfiles("etc/shit/*.json", {prefixdir = "etc/shit"})
 set_configdir("src/shit/configs")
 add_configfiles("src/shit/configs/project.d.in")
 
-add_requires("lua 5.4.7", {alias = "lua"})
+add_requires("lua 5.4.7", {alias = "lua54", configs = {shared = true}})
 
 add_includedirs("src")
 
@@ -39,13 +39,13 @@ target("conbase")
     add_files("src/pkgman/**.d")
     add_files("src/cli/**.d")
 
-    add_packages("lua", {public = true})
+    add_packages("lua54", {public = true})
 target_end()
 
 target("shit")
     set_kind("binary")
-    add_dcflags("-boundscheck=on", {force = true, tools = "dmd"})
-    add_files("src/app/app.d")
+
+    add_files("src/app/app.c")
     add_deps("conbase")
 target_end()
 

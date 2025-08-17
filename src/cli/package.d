@@ -17,6 +17,7 @@ import shit.executor;
 import shit.command;
 import shit.readline;
 import pkgman.basic;
+import pkgman.style;
 
 export void setDefaultTitle()
 {
@@ -91,9 +92,11 @@ export void executeCmdLine(ref GlobalConfig config, string home)
     }
 }
 
-export int cliMain(string[])
+extern (C) export int cliMain(int argc, const(char)** argv)
 {
     initSignals();
+
+    string[] args = convertToStringArray(argv, argc);
 
     try
     {
@@ -151,6 +154,22 @@ export int cliMain(string[])
         }
 
         setDefaultTitle();
+
+        // Run runners
+        try
+        {
+            shared(Runners) runners = getRunners();
+            foreach (runner; runners)
+            {
+                runner.run();
+            }
+        }
+        catch (ExtensionRunException e)
+        {
+            log("error when running extensions...");
+            log("  details: " ~ e.msg);
+        }
+
         try
         {
             while (true)
