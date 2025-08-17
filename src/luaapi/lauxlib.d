@@ -88,7 +88,7 @@ int luaL_loadfilex(lua_State* L, const(char)* filename, const(char)* mode);
 
 extern (D) auto luaL_loadfile(T0, T1)(auto ref T0 L, auto ref T1 f)
 {
-    return luaL_loadfilex(L, f, NULL);
+    return luaL_loadfilex(L, f, null);
 }
 
 int luaL_loadbufferx(
@@ -151,12 +151,12 @@ extern (D) auto luaL_argexpected(T0, T1, T2, T3)(auto ref T0 L, auto ref T1 cond
 
 extern (D) auto luaL_checkstring(T0, T1)(auto ref T0 L, auto ref T1 n)
 {
-    return luaL_checklstring(L, n, NULL);
+    return luaL_checklstring(L, n, null);
 }
 
 extern (D) auto luaL_optstring(T0, T1, T2)(auto ref T0 L, auto ref T1 n, auto ref T2 d)
 {
-    return luaL_optlstring(L, n, d, NULL);
+    return luaL_optlstring(L, n, d, null);
 }
 
 extern (D) auto luaL_typename(T0, T1)(auto ref T0 L, auto ref T1 i)
@@ -186,7 +186,7 @@ extern (D) auto luaL_opt(T0, T1, T2, T3)(auto ref T0 L, auto ref T1 f, auto ref 
 
 extern (D) auto luaL_loadbuffer(T0, T1, T2, T3)(auto ref T0 L, auto ref T1 s, auto ref T2 sz, auto ref T3 n)
 {
-    return luaL_loadbufferx(L, s, sz, n, NULL);
+    return luaL_loadbufferx(L, s, sz, n, null);
 }
 
 /*

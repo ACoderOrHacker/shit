@@ -8,6 +8,7 @@ import std.conv : to;
 import std.algorithm : startsWith, endsWith;
 import std.ascii : isControl;
 import std.utf;
+import std.getopt;
 import termcolor;
 import helper;
 import helper.signal;
@@ -17,10 +18,51 @@ import shit.executor;
 import shit.command;
 import shit.readline;
 import pkgman.basic;
+import pkgman.configs;
+
+@property
+string home()
+{
+    string home_ = getHome();
+    if (home_.endsWith(dirSeparator))
+    {
+        home_ = home_[0 .. $ - dirSeparator.length]; // split dir separator
+    }
+    return home_;
+}
 
 export void setDefaultTitle()
 {
     setConsoleTitle(format("SHIT shell v%s", shitFullVersion));
+}
+
+export void cliExecute(ref GlobalConfig config, string command)
+{
+    Command cmd = Command("");
+    try
+    {
+        cmd = Command(command);
+    }
+    catch (ParseError)
+    {
+        log(format("%s: parse error", command));
+        return;
+    }
+
+    try
+    {
+        auto result = executeCommand(config, cmd);
+        if (config.showExitCode)
+            log("exit code " ~ result.getExitCode().to!string);
+    }
+    catch (ExecuteException e)
+    {
+        log(e.msg);
+    }
+    catch (RegisteredCommandNotFoundException e)
+    {
+        log(format("%s: registered command not found", commandName(cmd)));
+    }
 }
 
 export void executeCmdLine(ref GlobalConfig config, string home)
@@ -64,52 +106,81 @@ export void executeCmdLine(ref GlobalConfig config, string home)
         return; // nothing to do
 
     setConsoleTitle(command);
-    Command cmd = Command("");
-    try
-    {
-        cmd = Command(command);
-    }
-    catch (ParseError)
-    {
-        log(format("%s: parse error", command));
-        return;
-    }
-
-    try
-    {
-        auto result = executeCommand(config, cmd);
-        if (config.showExitCode)
-            log("exit code " ~ result.getExitCode().to!string);
-    }
-    catch (ExecuteException e)
-    {
-        log(e.msg);
-    }
-    catch (RegisteredCommandNotFoundException e)
-    {
-        log(format("%s: registered command not found", commandName(cmd)));
-    }
+    cliExecute(config, command);
 }
 
-export int cliMain(string[])
+export int replMain(ref GlobalConfig globalConfig)
+{
+    // output information
+    writefln("SHIT shell v%s, a powerful and modern terminal", shitFullVersion);
+    writefln("On [%s, %s], on %s mode",
+        shitOs, shitArchitecture, shitMode);
+    writeln("Copyright (C) 2025, ACoderOrHacker");
+    writeln();
+
+    setDefaultTitle();
+
+    // Run runners
+    try
+    {
+        PkgmanConfig pkgconfig = readPkgmanConfig();
+        shared(Runners) runners = getRunners();
+
+        foreach (i, pkg; pkgconfig.enablePackages)
+        {
+            string path = buildPath(packagesPath, pkg);
+            string pkgtype = cast(string) read(buildPath(path, ".pkgtype"));
+
+            if (pkgtype !in runners)
+            {
+                log("unsupported package type: " ~ pkgtype);
+                break;
+            }
+
+            runners[pkgtype].run(pkg, path);
+        }
+    }
+    catch (ExtensionRunException e)
+    {
+        log("error when running extensions...");
+        log("  details: " ~ e.msg);
+    }
+    catch (BadPkgmanConfigException e)
+    {
+        log("bad package configure: " ~ e.msg);
+    }
+    catch (PkgmanConfigNotFoundException e)
+    {
+        log("pkgman configure not found: " ~ e.msg);
+    }
+    catch (FileException e)
+    {
+        log("bad read for .pkgtype: " ~ e.msg);
+    }
+
+    try
+    {
+        while (true)
+        {
+            executeCmdLine(globalConfig, home);
+            writeln();
+        }
+    }
+    catch (ExitSignal e)
+    {
+        return e.getCode(); // exit
+    }
+
+    return 0;
+}
+
+extern (C) export int cliMain(int argc, const(char)** argv)
 {
     initSignals();
 
     try
     {
-        // output information
-        writefln("SHIT shell v%s, a powerful and modern terminal", shitFullVersion);
-        writefln("On [%s, %s], on %s mode",
-            shitOs, shitArchitecture, shitMode);
-        writeln("Copyright (C) 2025, ACoderOrHacker");
-        writeln();
-
         GlobalConfig globalConfig;
-        string home = getHome();
-        if (home.endsWith(dirSeparator))
-        {
-            home = home[0 .. $ - dirSeparator.length]; // split dir separator
-        }
 
         bool isDefault = false;
         try
@@ -150,20 +221,47 @@ export int cliMain(string[])
             }
         }
 
-        setDefaultTitle();
-        try
+        string[] args = convertToStringArray(argv, argc);
+
+        if (args.length == 1)
         {
-            while (true)
-            {
-                executeCmdLine(globalConfig, home);
-                writeln();
-            }
-        }
-        catch (ExitSignal e)
-        {
-            return e.getCode(); // exit
+            return replMain(globalConfig);
         }
 
+        string command;
+        string packageName;
+
+        void replHandler(string option)
+        {
+            exit(replMain(globalConfig));
+        }
+
+        void executeHandler(string option, string command)
+        {
+            cliExecute(globalConfig, command);
+        }
+
+        void installHandler(string option, string file)
+        {
+            // TODO:
+        }
+
+        auto helpInformation = getopt(
+            args,
+            "repl|r", "run repl shell", &replHandler,
+            "execute|e", "execute a command", &executeHandler,
+            "install|i", "install a package", &installHandler
+        );
+
+        if (helpInformation.helpWanted)
+        {
+            defaultGetoptPrinter("The SHIT terminal", helpInformation.options);
+            return 0;
+        }
+    }
+    catch (ExitSignal e)
+    {
+        return e.getCode();
     }
     catch (Exception e)
     {
