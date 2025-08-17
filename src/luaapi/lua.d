@@ -269,7 +269,7 @@ void lua_callk(
 
 extern (D) auto lua_call(T0, T1, T2)(auto ref T0 L, auto ref T1 n, auto ref T2 r)
 {
-    return lua_callk(L, n, r, 0, NULL);
+    return lua_callk(L, n, r, 0, null);
 }
 
 int lua_pcallk(
@@ -282,7 +282,7 @@ int lua_pcallk(
 
 extern (D) auto lua_pcall(T0, T1, T2, T3)(auto ref T0 L, auto ref T1 n, auto ref T2 r, auto ref T3 f)
 {
-    return lua_pcallk(L, n, r, f, 0, NULL);
+    return lua_pcallk(L, n, r, f, 0, null);
 }
 
 int lua_load(
@@ -304,7 +304,7 @@ int lua_isyieldable(lua_State* L);
 
 extern (D) auto lua_yield(T0, T1)(auto ref T0 L, auto ref T1 n)
 {
-    return lua_yieldk(L, n, 0, NULL);
+    return lua_yieldk(L, n, 0, null);
 }
 
 /*
@@ -380,12 +380,12 @@ extern (D) auto lua_getextraspace(T)(auto ref T L)
 
 extern (D) auto lua_tonumber(T0, T1)(auto ref T0 L, auto ref T1 i)
 {
-    return lua_tonumberx(L, i, NULL);
+    return lua_tonumberx(L, i, null);
 }
 
 extern (D) auto lua_tointeger(T0, T1)(auto ref T0 L, auto ref T1 i)
 {
-    return lua_tointegerx(L, i, NULL);
+    return lua_tointegerx(L, i, null);
 }
 
 extern (D) auto lua_pop(T0, T1)(auto ref T0 L, auto ref T1 n)
@@ -450,7 +450,7 @@ extern (D) auto lua_pushglobaltable(T)(auto ref T L)
 
 extern (D) auto lua_tostring(T0, T1)(auto ref T0 L, auto ref T1 i)
 {
-    return lua_tolstring(L, i, NULL);
+    return lua_tolstring(L, i, null);
 }
 
 extern (D) auto lua_insert(T0, T1)(auto ref T0 L, auto ref T1 idx)
@@ -483,7 +483,7 @@ extern (D) auto lua_setuservalue(T0, T1)(auto ref T0 L, auto ref T1 idx)
 
 extern (D) auto lua_resetthread(T)(auto ref T L)
 {
-    return lua_closethread(L, NULL);
+    return lua_closethread(L, null);
 }
 
 /* }============================================================== */

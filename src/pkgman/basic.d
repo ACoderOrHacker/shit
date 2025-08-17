@@ -1,10 +1,13 @@
 module pkgman.basic;
 
-import std.zip;
+import std.datetime;
 import std.file;
+import std.path;
 import std.json;
 import std.conv;
-import std.datetime;
+import shit.configs.project;
+import pkgman.configs;
+public import pkgman.archive;
 
 export class BadPackageFileException : Exception
 {
@@ -30,6 +33,22 @@ export class BadPackageInfoException : Exception
     }
 }
 
+export class PackageInstallException : Exception
+{
+    this(string msg)
+    {
+        super(msg);
+    }
+}
+
+export class ExtensionRunException : Exception
+{
+    this(string msg)
+    {
+        super(msg);
+    }
+}
+
 export class PackageInfo
 {
     string type;
@@ -42,8 +61,24 @@ export class PackageInfo
     string license;
 }
 
-export class Package(string Pkgtype)
+export class Package
 {
+    protected void addMember(T)(ZipArchive ar, string name, T data)
+    {
+        ArchiveMember member = new ArchiveMember;
+        member.name = name;
+        member.expandedData(cast(ubyte[]) data);
+        member.compressionMethod = CompressionMethod.deflate;
+        member.time(Clock.currTime());
+
+        ar.addMember(member);
+    }
+
+    protected PackageInfo createPackageInfo()
+    {
+        return new PackageInfo;
+    }
+
     protected void readExtra(ZipArchive, ArchiveMember, string, ref PackageInfo)
     {
     }
@@ -52,11 +87,11 @@ export class Package(string Pkgtype)
     {
     }
 
-    protected PackageInfo defaultPackage()
+    protected PackageInfo defaultPackage(string pkgtype)
     {
-        PackageInfo info = new PackageInfo;
+        PackageInfo info = createPackageInfo();
 
-        info.type = Pkgtype;
+        info.type = pkgtype;
         info.name = "";
         info.ver = "";
         info.desc = "";
@@ -71,7 +106,8 @@ export class Package(string Pkgtype)
         this.file_ = file;
     }
 
-    protected auto getFile()
+    @property
+    string file()
     {
         return file_;
     }
@@ -104,7 +140,7 @@ export class Package(string Pkgtype)
             throw new BadPackageFileException(e.msg);
         }
 
-        PackageInfo info = new PackageInfo;
+        PackageInfo info = createPackageInfo();
         foreach (name, am; archive.directory)
         {
             archive.expand(am);
@@ -155,13 +191,8 @@ export class Package(string Pkgtype)
     {
         ZipArchive archive = new ZipArchive;
 
-        ArchiveMember pkgtypeFile = new ArchiveMember;
-        pkgtypeFile.name = ".pkgtype";
-        pkgtypeFile.expandedData(cast(ubyte[]) info.type);
-        pkgtypeFile.compressionMethod = CompressionMethod.deflate;
-        pkgtypeFile.time(Clock.currTime());
+        this.addMember(archive, ".pkgtype", info.type);
 
-        ArchiveMember packageJsonFile = new ArchiveMember;
         JSONValue packageValue = [
             "name": JSONValue(info.name),
             "version": JSONValue(info.ver),
@@ -170,23 +201,60 @@ export class Package(string Pkgtype)
             "authors": JSONValue(info.authors)
         ];
 
-        packageJsonFile.name = "package.json";
-        packageJsonFile.expandedData(cast(ubyte[]) packageValue.toPrettyString);
-        packageJsonFile.compressionMethod = CompressionMethod.deflate;
-        pkgtypeFile.time(Clock.currTime());
-
-        archive.addMember(pkgtypeFile);
-        archive.addMember(packageJsonFile);
+        this.addMember(archive, "package.json", packageValue.toPrettyString);
 
         writeExtra(archive, info);
         auto data = archive.build();
         write(file_, data);
     }
 
-    void writeDefaultPackage()
+    void install()
     {
-        writePackage(defaultPackage());
+        ArchiveManager.unarchive(file_, extensionPath);
+    }
+
+    void uninstall()
+    {
+        rmdirRecurse(extensionPath);
+    }
+
+    void writeDefaultPackage(string pkgtype)
+    {
+        writePackage(defaultPackage(pkgtype));
+    }
+
+    @property
+    string extensionPath()
+    {
+        return buildPath(packagesPath, baseName(file_, extension(file_)));
     }
 
     private string file_;
+}
+
+interface ExtensionRunner
+{
+    void run(string /* package name */ ,
+        string /* package path */ ) shared;
+}
+
+/// Runner API
+alias Runners = ExtensionRunner[string];
+
+shared(Runners) runners;
+
+export ref shared(Runners) getRunners()
+{
+    return runners;
+}
+
+export class ExtensionRunnerRegistry
+{
+    ExtensionRunnerRegistry register(Runner)(string name)
+    {
+        ref shared(Runners) runners_ = getRunners();
+        runners_[name] = new Runner;
+
+        return this;
+    }
 }
