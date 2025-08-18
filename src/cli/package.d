@@ -20,6 +20,16 @@ import shit.readline;
 import pkgman.basic;
 import pkgman.configs;
 
+void outputInformation()
+{
+    // output information
+    writefln("SHIT shell v%s, a powerful and modern terminal", shitFullVersion);
+    writefln("On [%s, %s], on %s mode",
+        shitOs, shitArchitecture, shitMode);
+    writeln("Copyright (C) 2025, ACoderOrHacker");
+    writeln();
+}
+
 @property
 string home()
 {
@@ -36,7 +46,7 @@ export void setDefaultTitle()
     setConsoleTitle(format("SHIT shell v%s", shitFullVersion));
 }
 
-export void cliExecute(ref GlobalConfig config, string command)
+export void cliExecute(ref GlobalConfig config, string command, bool showExitcode = true)
 {
     Command cmd = Command("");
     try
@@ -52,7 +62,7 @@ export void cliExecute(ref GlobalConfig config, string command)
     try
     {
         auto result = executeCommand(config, cmd);
-        if (config.showExitCode)
+        if (config.showExitCode && showExitcode)
             log("exit code " ~ result.getExitCode().to!string);
     }
     catch (ExecuteException e)
@@ -65,7 +75,7 @@ export void cliExecute(ref GlobalConfig config, string command)
     }
 }
 
-export void executeCmdLine(ref GlobalConfig config, string home)
+export void executeCmdLine(GlobalConfig config, string home)
 {
     scope (exit)
         setDefaultTitle();
@@ -109,15 +119,10 @@ export void executeCmdLine(ref GlobalConfig config, string home)
     cliExecute(config, command);
 }
 
-export int replMain(ref GlobalConfig globalConfig)
+export int replMain()
 {
-    // output information
-    writefln("SHIT shell v%s, a powerful and modern terminal", shitFullVersion);
-    writefln("On [%s, %s], on %s mode",
-        shitOs, shitArchitecture, shitMode);
-    writeln("Copyright (C) 2025, ACoderOrHacker");
-    writeln();
-
+    outputInformation();
+    GlobalConfig globalConfig = initWithGlobalConfig();
     setDefaultTitle();
 
     // Run runners
@@ -174,83 +179,114 @@ export int replMain(ref GlobalConfig globalConfig)
     return 0;
 }
 
+export GlobalConfig initWithGlobalConfig()
+{
+    GlobalConfig globalConfig;
+
+    bool isDefault = false;
+    try
+    {
+        globalConfig = getGlobalConfig();
+        startUp(globalConfig);
+    }
+    catch (BadGlobalConfigException e)
+    {
+        log("startup error(bad global configures): " ~ e.msg);
+        isDefault = true;
+    }
+    catch (GlobalConfigNotFoundException e)
+    {
+        log("warning: global configures not found: " ~ e.msg);
+        isDefault = true;
+    }
+    catch (StartUpException e)
+    {
+        log("startup error(bad configures): " ~ e.msg);
+        isDefault = true;
+    }
+
+    if (isDefault)
+    {
+        globalConfig.showExitCode = false;
+        globalConfig.defaultPath = home;
+        try
+        {
+            startUp(globalConfig);
+        }
+        catch (StartUpException e)
+        {
+            // that is the default configuration,
+            // if it fails, then maybe the getHome or anyelse gets bad works
+            internalError(e.msg);
+            exit(1);
+        }
+    }
+
+    return globalConfig;
+}
+
 extern (C) export int cliMain(int argc, const(char)** argv)
 {
     initSignals();
 
     try
     {
-        GlobalConfig globalConfig;
-
-        bool isDefault = false;
-        try
-        {
-            globalConfig = getGlobalConfig();
-            startUp(globalConfig);
-        }
-        catch (BadGlobalConfigException e)
-        {
-            log("startup error(bad global configures): " ~ e.msg);
-            isDefault = true;
-        }
-        catch (GlobalConfigNotFoundException e)
-        {
-            log("warning: global configures not found: " ~ e.msg);
-            isDefault = true;
-        }
-        catch (StartUpException e)
-        {
-            log("startup error(bad configures): " ~ e.msg);
-            isDefault = true;
-        }
-
-        if (isDefault)
-        {
-            globalConfig.showExitCode = false;
-            globalConfig.defaultPath = home;
-            try
-            {
-                startUp(globalConfig);
-            }
-            catch (StartUpException e)
-            {
-                // that is the default configuration,
-                // if it fails, then maybe the getHome or anyelse gets bad works
-                internalError(e.msg);
-                return 1;
-            }
-        }
-
         string[] args = convertToStringArray(argv, argc);
 
         if (args.length == 1)
         {
-            return replMain(globalConfig);
+            return replMain();
         }
 
-        string command;
-        string packageName;
+        string defaultPackageType;
 
         void replHandler(string option)
         {
-            exit(replMain(globalConfig));
+            exit(replMain());
         }
 
         void executeHandler(string option, string command)
         {
-            cliExecute(globalConfig, command);
+            GlobalConfig config = initWithGlobalConfig();
+            cliExecute(config, command, false);
         }
 
         void installHandler(string option, string file)
         {
-            // TODO:
+            outputInformation();
+
+            Package pkg = new Package(file);
+            try
+            {
+                pkg.install();
+
+                log("package `" ~ file ~ "` has installed successfully");
+            }
+            catch (Exception e)
+            {
+                log("error when installing package `" ~ file ~ "`: " ~ e.msg);
+                exit(1);
+            }
+        }
+
+        void createPackageHandler(string option, string optfile)
+        {
+            outputInformation();
+
+            Package pkg = new Package(optfile);
+
+            pkg.writeDefaultPackage(defaultPackageType);
+
+            log("package `" ~ optfile ~ "` has created successfully");
         }
 
         auto helpInformation = getopt(
             args,
             "repl|r", "run repl shell", &replHandler,
             "execute|e", "execute a command", &executeHandler,
-            "install|i", "install a package", &installHandler
+            "install|i", "install a package", &installHandler,
+            "create|c", "create a default package", &createPackageHandler,
+            "type|t", "the type to create default package", &defaultPackageType
         );
 
         if (helpInformation.helpWanted)
