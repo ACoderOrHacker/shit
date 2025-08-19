@@ -8,6 +8,7 @@ import shit.configs.basic;
 import shit.configs.project;
 import pkgman.basic;
 import luaapi;
+import luashit;
 
 class StylePackageInfo : PackageInfo
 {
@@ -67,35 +68,44 @@ class StylePackage : Package
         return this.defaultPackage("style");
     }
 
-    void writeDefaultPackage() {
+    void writeDefaultPackage()
+    {
         writePackage(defaultPackage());
     }
 }
 
 class StyleExtensionRunner : ExtensionRunner
 {
-    private void runOneStyleFile(string name, string file) shared
+    private void runOneStyleFile(string name, string file, ref GlobalConfig config) shared
     {
+        extensions[name] = luaL_newstate();
         if (!exists(file))
-            throw new ExtensionRunException("extension `" ~ name ~"`(file " ~ file ~ ") not found");
+            throw new ExtensionRunException("extension `" ~ name ~ "`(file " ~ file ~ ") not found");
 
-        lua_State* extension = luaL_newstate();
+        lua_State* extension = extensions[name];
         luaL_openlibs(extension);
+        luaopen_luashit(extension, config);
 
-        if (luaL_dofile(extension, (file ~ "\0").ptr)) // oh my god! Damn!
-            // the \0 must add because lua is written by C
-            {
+        if (luaL_dofile(extension, toStringz(file)) != LUA_OK)
+        {
             throw new ExtensionRunException("lua execute error: " ~ lua_tostring(extension, -1)
                     .to!string);
         }
-
-        lua_close(extension);
     }
 
-    override void run(string packageName, string packagePath) shared
+    override void run(string packageName, string packagePath, ref GlobalConfig config) shared
     {
-        runOneStyleFile(packageName, buildPath(packagePath, "styles", "main.lua"));
+        runOneStyleFile(packageName, buildPath(packagePath, "styles", "main.lua"), config);
     }
+
+    override void destroy(string packageName, string packagePath, ref GlobalConfig config) shared
+    {
+        if (packageName !in extensions)
+            return;
+        lua_close(extensions[packageName]);
+    }
+
+    private static lua_State*[string] extensions;
 }
 
 static this()

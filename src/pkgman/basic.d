@@ -6,6 +6,7 @@ import std.path;
 import std.json;
 import std.conv;
 import shit.configs.project;
+public import shit.configs.global;
 import pkgman.configs;
 public import pkgman.archive;
 
@@ -235,7 +236,12 @@ export class Package
 interface ExtensionRunner
 {
     void run(string /* package name */ ,
-        string /* package path */ ) shared;
+        string /* package path */ ,
+        ref GlobalConfig) shared;
+
+    void destroy(string /* package name */ ,
+        string /* package path */ ,
+        ref GlobalConfig) shared;
 }
 
 /// Runner API

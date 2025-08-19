@@ -25,11 +25,15 @@ export class BadGlobalConfigException : Exception
     }
 }
 
+alias WritePromptsFunc = void delegate();
+
 export struct GlobalConfig
 {
     string defaultPath;
     bool showExitCode;
     string gitDir;
+
+    WritePromptsFunc prompts;
 }
 
 export GlobalConfig getGlobalConfig()

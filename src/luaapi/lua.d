@@ -15,7 +15,7 @@ extern (C):
 enum LUA_AUTHORS = "R. Ierusalimschy, L. H. de Figueiredo, W. Celes";
 
 enum LUA_VERSION_MAJOR_N = 5;
-enum LUA_VERSION_MINOR_N = 5;
+enum LUA_VERSION_MINOR_N = 4;
 enum LUA_VERSION_RELEASE_N = 0;
 
 enum LUA_VERSION_NUM = LUA_VERSION_MAJOR_N * 100 + LUA_VERSION_MINOR_N;

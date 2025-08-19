@@ -94,6 +94,7 @@ export void executeCmdLine(GlobalConfig config, string home)
 
     string branchInfo = gitBranch == null ? "" : " (" ~ gitBranch ~ ")";
 
+    config.prompts();
     stdout.setColor(green)
         .write(getUserName(), "@", getHostName(), " ");
     stdout.setColor(reset)
@@ -121,20 +122,28 @@ export void executeCmdLine(GlobalConfig config, string home)
 
 export int replMain()
 {
+
     outputInformation();
     GlobalConfig globalConfig = initWithGlobalConfig();
     setDefaultTitle();
 
     // Run runners
-    try
-    {
-        PkgmanConfig pkgconfig = readPkgmanConfig();
-        shared(Runners) runners = getRunners();
+    PkgmanConfig pkgconfig;
+    shared(Runners) runners;
 
+    void runAll()
+    {
         foreach (i, pkg; pkgconfig.enablePackages)
         {
             string path = buildPath(packagesPath, pkg);
-            string pkgtype = cast(string) read(buildPath(path, ".pkgtype"));
+            string pkgtypePath = buildPath(path, ".pkgtype");
+
+            if (!exists(pkgtypePath))
+            {
+                log("bad pkgtype `" ~ pkgtypePath ~ "`");
+                break;
+            }
+            string pkgtype = cast(string) read(pkgtypePath);
 
             if (pkgtype !in runners)
             {
@@ -142,8 +151,40 @@ export int replMain()
                 break;
             }
 
-            runners[pkgtype].run(pkg, path);
+            runners[pkgtype].run(pkg, path, globalConfig);
         }
+    }
+
+    void destroyAll()
+    {
+        foreach (i, pkg; pkgconfig.enablePackages)
+        {
+            string path = buildPath(packagesPath, pkg);
+            string pkgtypePath = buildPath(path, ".pkgtype");
+
+            if (!exists(pkgtypePath))
+            {
+                log("bad pkgtype `" ~ pkgtypePath ~ "`");
+                break;
+            }
+            string pkgtype = cast(string) read(pkgtypePath);
+
+            if (pkgtype !in runners)
+            {
+                log("unsupported package type: " ~ pkgtype);
+                break;
+            }
+
+            runners[pkgtype].destroy(pkg, path, globalConfig);
+        }
+    }
+
+    try
+    {
+        pkgconfig = readPkgmanConfig();
+        runners = getRunners();
+
+        runAll();
     }
     catch (ExtensionRunException e)
     {
@@ -173,9 +214,11 @@ export int replMain()
     }
     catch (ExitSignal e)
     {
+        destroyAll();
         return e.getCode(); // exit
     }
 
+    destroyAll();
     return 0;
 }
 
@@ -221,6 +264,7 @@ export GlobalConfig initWithGlobalConfig()
             exit(1);
         }
     }
+    globalConfig.prompts = delegate() {};
 
     return globalConfig;
 }
@@ -269,6 +313,24 @@ extern (C) export int cliMain(int argc, const(char)** argv)
             }
         }
 
+        void uninstallHandler(string option, string file)
+        {
+            outputInformation();
+
+            Package pkg = new Package(file);
+            try
+            {
+                pkg.uninstall();
+
+                log("package `" ~ file ~ "` has uninstalled successfully");
+            }
+            catch (Exception e)
+            {
+                log("error when uninstalling package `" ~ file ~ "`: " ~ e.msg);
+                exit(1);
+            }
+        }
+
         void createPackageHandler(string option, string optfile)
         {
             outputInformation();
@@ -285,6 +347,7 @@ extern (C) export int cliMain(int argc, const(char)** argv)
             "repl|r", "run repl shell", &replHandler,
             "execute|e", "execute a command", &executeHandler,
             "install|i", "install a package", &installHandler,
+            "uninstall|u", "uninstall a package", &uninstallHandler,
             "create|c", "create a default package", &createPackageHandler,
             "type|t", "the type to create default package", &defaultPackageType
         );
