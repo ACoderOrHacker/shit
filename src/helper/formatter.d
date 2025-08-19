@@ -167,7 +167,7 @@ private string gitBranch()
         gitBranch = null;
     }
 
-    return gitBranch == null ? "" : " (" ~ gitBranch ~ ")";
+    return gitBranch == null ? "" : gitBranch;
 }
 
 private string admin()

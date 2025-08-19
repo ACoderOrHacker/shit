@@ -124,6 +124,68 @@ int lcprintln(lua_State* L)
     return len;
 }
 
+int lget_format_variable(lua_State* L)
+{
+    if (!lua_isstring(L, 1))
+    {
+        luaL_error(L, "variable name must be a string");
+        return 1;
+    }
+
+    string variableName = cast(string) fromStringz(lua_tostring(L, 1));
+    if (variableName !in Formatter.formatValues)
+        lua_pushnil(L);
+    else
+        lua_pushstring(L, toStringz(Formatter.formatValues[variableName]()));
+    return 1;
+}
+
+int lset_format_variable(lua_State* L)
+{
+    if (!lua_isstring(L, 1))
+    {
+        luaL_error(L, "format variable name is must be a string");
+        return 0;
+    }
+
+    if (!lua_isfunction(L, 2))
+    {
+        luaL_error(L, toStringz("format variable value is must be a function"));
+        return 0;
+    }
+
+    string variableName = cast(string) fromStringz(lua_tostring(L, 1));
+
+    if (variableName in Formatter.formatValues)
+    {
+        luaL_error(L, toStringz(variableName ~ " is already in Formatter"));
+        return 0;
+    }
+
+    const(char)* lglobalName = toStringz("__set_format_variable__" ~ variableName);
+    lua_pushvalue(L, 2);
+    lua_setglobal(L, lglobalName);
+
+    Formatter.formatValues[variableName] = delegate() {
+        lua_getglobal(L, lglobalName);
+        lua_pcall(L, 0, 1, 0);
+
+        if (!lua_isstring(L, -1))
+        {
+            luaL_error(L, toStringz("format variable " ~ variableName ~ " returns a non-string value"));
+            lua_pop(L, 1);
+            return "";
+        }
+
+        string s = cast(string) fromStringz(lua_tostring(L, -1));
+        lua_pop(L, 1);
+
+        return s;
+    };
+
+    return 0;
+}
+
 void luaopen_luashit(lua_State* L, ref GlobalConfig config)
 {
     void add(string name, lua_CFunction func)
@@ -141,4 +203,6 @@ void luaopen_luashit(lua_State* L, ref GlobalConfig config)
     add("on_prompts", &lon_prompts);
     add("cprint", &lcprint);
     add("cprintln", &lcprintln);
+    add("get_format_variable", &lget_format_variable);
+    add("set_format_variable", &lset_format_variable);
 }
