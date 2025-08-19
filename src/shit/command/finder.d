@@ -9,6 +9,7 @@ import std.process : environment;
 version (Windows)
 {
     import core.sys.windows.windows;
+    import core.sys.windows.winreg;
 }
 else version (Posix)
 {
@@ -18,8 +19,6 @@ else
 {
     static assert(false, "Unsupported platform");
 }
-
-// TODO: add App Path for windows
 
 private bool isExecutable(string path)
 {
@@ -34,8 +33,42 @@ private bool isExecutable(string path)
     }
     else
     {
-        return access(path.toStringz(), X_OK) == 0;
+        return access(toStringz(path), X_OK) == 0;
     }
+}
+
+version (Windows) private string findFromAppPath(string programName)
+{
+    string regName = baseName(programName);
+    if (!regName.endsWith(".exe"))
+    {
+        regName ~= ".exe";
+    }
+    HKEY hKey = null;
+    DWORD dwType = REG_SZ;
+
+    LONG lRet = RegOpenKeyExA(HKEY_LOCAL_MACHINE, toStringz(
+            "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\App Paths\\" ~ regName), 0, KEY_QUERY_VALUE, &hKey);
+
+    if (lRet != ERROR_SUCCESS)
+        return null;
+
+    DWORD dataSize;
+    LONG lStatus = RegGetValueA(hKey, null, null, RRF_RT_REG_SZ, null, null, &dataSize);
+
+    if (lStatus != ERROR_SUCCESS)
+        return null;
+
+    // create a buffer
+    char[] buffer;
+    buffer.length = dataSize;
+
+    lStatus = RegGetValueA(hKey, null, null, RRF_RT_REG_SZ, null, cast(PVOID) buffer.ptr, &dataSize);
+
+    if (lStatus != ERROR_SUCCESS)
+        return null;
+
+    return cast(string) fromStringz(buffer);
 }
 
 export string findProgram(string programName)
@@ -46,7 +79,12 @@ export string findProgram(string programName)
         return isExecutable(programName) ? programName : null;
     }
 
-    // TODO: add App Path there
+    version (Windows)
+    {
+        string appPathResult = findFromAppPath(programName);
+        if (appPathResult !is null)
+            return appPathResult;
+    }
 
     // find in current directory
     string currentDir = buildPath(getcwd(), programName);

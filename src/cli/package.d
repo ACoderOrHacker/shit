@@ -2,7 +2,7 @@ module cli;
 
 import std.file;
 import std.path;
-import std.stdio;
+import std.stdio : stdout, stderr, writeln, writefln;
 import std.format : format;
 import std.conv : to;
 import std.algorithm : startsWith, endsWith;
@@ -227,7 +227,7 @@ export GlobalConfig initWithGlobalConfig()
             exit(1);
         }
     }
-    globalConfig.prompts = delegate() { write(getcwd(), " $ "); };
+    globalConfig.prompts = delegate() { stdout.write(getcwd(), " $ "); };
 
     return globalConfig;
 }
