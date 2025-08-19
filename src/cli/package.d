@@ -227,7 +227,7 @@ export GlobalConfig initWithGlobalConfig()
             exit(1);
         }
     }
-    globalConfig.prompts = delegate() {};
+    globalConfig.prompts = delegate() { write(getcwd(), " $ "); };
 
     return globalConfig;
 }
