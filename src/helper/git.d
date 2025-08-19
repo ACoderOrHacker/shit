@@ -3,6 +3,8 @@ module helper.git;
 import std.process;
 import std.path;
 import std.file;
+import std.array;
+import std.algorithm;
 
 import std.format;
 import std.stdio;
@@ -17,6 +19,10 @@ class GitRepoNotFoundException : Exception
 
 class GitData
 {
+    private string path_;
+    private string gitPath_;
+    private string gitRepoPath_;
+
     this(string gitPath, string path, bool recursion = false)
     {
         string pathTemp = gitPathGet(path, recursion);
@@ -53,50 +59,52 @@ class GitData
     @property
     string currentBranch()
     {
-        try
+        string headFile = buildPath(this.gitRepo, "HEAD");
+        if (exists(headFile))
         {
-            string fullCommand = format("%s --git-dir=%s branch --no-color", gitPath, buildPath(path, ".git"));
-            auto result = executeShell(fullCommand);
-            if (result.status != 0)
-                return null;
-            return result.output[2 .. $ - 1];
+            string headContent = (cast(string) read(headFile))[0 .. $ - 1];
+            if (headContent.startsWith("ref: "))
+            {
+                string[] parts = headContent.split("/");
+                return parts[$ - 1];
+            }
+            else
+            {
+                return "(detached HEAD)";
+            }
         }
-        catch (Exception e)
+        else
         {
+            throw new GitRepoNotFoundException("Not a git repository: " ~ this.gitRepo);
+        }
+    }
+
+    private string gitPathGet(string path, bool recursion)
+    {
+        if (!recursion)
+        {
+            if (!exists(path))
+                return path;
             return null;
         }
-    }
 
-    private string path_;
-    private string gitPath_;
-    private string gitRepoPath_;
-}
+        string currentDir = absolutePath(path);
+        do
+        {
+            string gitPath = buildPath(currentDir, ".git");
 
-private string gitPathGet(string path, bool recursion)
-{
-    if (!recursion)
-    {
-        if (!exists(path))
-            return path;
+            if (exists(gitPath))
+                return currentDir;
+
+            string parentDir = dirName(currentDir);
+
+            if (parentDir == currentDir)
+                break;
+
+            currentDir = parentDir;
+        }
+        while (true);
+
         return null;
     }
-
-    string currentDir = absolutePath(path);
-    do
-    {
-        string gitPath = buildPath(currentDir, ".git");
-
-        if (exists(gitPath))
-            return currentDir;
-
-        string parentDir = dirName(currentDir);
-
-        if (parentDir == currentDir)
-            break;
-
-        currentDir = parentDir;
-    }
-    while (true);
-
-    return null;
 }

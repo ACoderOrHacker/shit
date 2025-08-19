@@ -2,9 +2,11 @@ module luashit;
 
 /// The shit terminal API for Lua interface
 
+import std.stdio : stdout;
 import std.string : fromStringz, toStringz; // for c-style string convertion
 import std.conv;
 import luaapi;
+import helper.formatter;
 import shit.configs.global;
 
 extern (C):
@@ -98,6 +100,30 @@ int lon_prompts(lua_State* L)
     return 0;
 }
 
+int lcprint(lua_State* L)
+{
+    import std.stdio;
+
+    if (!lua_isstring(L, 1))
+    {
+        luaL_error(L, "cprint needs a string format value");
+        return 0;
+    }
+
+    string formatString = cast(string) fromStringz(lua_tostring(L, 1));
+    Formatter.writef(formatString);
+
+    return 0;
+}
+
+int lcprintln(lua_State* L)
+{
+    int len = lcprint(L);
+    stdout.writeln();
+
+    return len;
+}
+
 void luaopen_luashit(lua_State* L, ref GlobalConfig config)
 {
     void add(string name, lua_CFunction func)
@@ -113,4 +139,6 @@ void luaopen_luashit(lua_State* L, ref GlobalConfig config)
     luaL_checkversion(L);
     add("set_prompts", &lset_prompts);
     add("on_prompts", &lon_prompts);
+    add("cprint", &lcprint);
+    add("cprintln", &lcprintln);
 }

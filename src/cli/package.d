@@ -30,17 +30,6 @@ void outputInformation()
     writeln();
 }
 
-@property
-string home()
-{
-    string home_ = getHome();
-    if (home_.endsWith(dirSeparator))
-    {
-        home_ = home_[0 .. $ - dirSeparator.length]; // split dir separator
-    }
-    return home_;
-}
-
 export void setDefaultTitle()
 {
     setConsoleTitle(format("SHIT shell v%s", shitFullVersion));
@@ -75,38 +64,12 @@ export void cliExecute(ref GlobalConfig config, string command, bool showExitcod
     }
 }
 
-export void executeCmdLine(GlobalConfig config, string home)
+export void executeCmdLine(GlobalConfig config)
 {
     scope (exit)
         setDefaultTitle();
 
-    string path = getcwd();
-    string showPath = replaceFirst(path, home, "~");
-    string gitBranch;
-    try
-    {
-        gitBranch = new GitData(config.gitDir, path, true).currentBranch;
-    }
-    catch (GitRepoNotFoundException)
-    {
-        gitBranch = null;
-    }
-
-    string branchInfo = gitBranch == null ? "" : " (" ~ gitBranch ~ ")";
-
     config.prompts();
-    stdout.setColor(green)
-        .write(getUserName(), "@", getHostName(), " ");
-    stdout.setColor(reset)
-        .setColor(brightBlue)
-        .write(showPath);
-    stdout.setColor(reset)
-        .setColor(yellow)
-        .writeln(branchInfo);
-    stdout.setColor(reset);
-    string indicatorOfCommand = isAdmin() ? "# " : "$ ";
-    stderr.write(indicatorOfCommand);
-    stderr.flush();
 
     // Read command from stdin
     string command = new DefaultReadline().read().toUTF8;
@@ -208,7 +171,7 @@ export int replMain()
     {
         while (true)
         {
-            executeCmdLine(globalConfig, home);
+            executeCmdLine(globalConfig);
             writeln();
         }
     }
@@ -251,7 +214,7 @@ export GlobalConfig initWithGlobalConfig()
     if (isDefault)
     {
         globalConfig.showExitCode = false;
-        globalConfig.defaultPath = home;
+        globalConfig.defaultPath = getHome();
         try
         {
             startUp(globalConfig);
