@@ -5,6 +5,8 @@ module luashit;
 import std.stdio : stdout;
 import std.string : fromStringz, toStringz; // for c-style string convertion
 import std.conv;
+import std.algorithm;
+import std.array;
 import luaapi;
 import helper.formatter;
 import shit.configs.global;
@@ -65,6 +67,11 @@ private string[] popStringArray(lua_State* L)
 
 int lset_prompts(lua_State* L)
 {
+    if (lua_gettop(L) != 1)
+    {
+        luaL_error(L, toStringz("set_prompts needs 1 paramter"));
+    }
+
     string[] prompts = popStringArray(L);
     if (prompts is null)
         return 0;
@@ -83,6 +90,11 @@ int lset_prompts(lua_State* L)
 
 int lon_prompts(lua_State* L)
 {
+    if (lua_gettop(L) != 1)
+    {
+        luaL_error(L, toStringz("on_prompts needs 1 paramter"));
+    }
+
     if (!lua_isfunction(L, 1))
     {
         luaL_error(L, toStringz("invoke error: there needs a function"));
@@ -103,6 +115,11 @@ int lon_prompts(lua_State* L)
 int lcprint(lua_State* L)
 {
     import std.stdio;
+
+    if (lua_gettop(L) != 1)
+    {
+        luaL_error(L, toStringz("cprint/cprintln needs 1 paramter"));
+    }
 
     if (!lua_isstring(L, 1))
     {
@@ -126,9 +143,14 @@ int lcprintln(lua_State* L)
 
 int lget_format_variable(lua_State* L)
 {
+    if (lua_gettop(L) < 1)
+    {
+        luaL_error(L, toStringz("get_format_variable needs 1 paramter"));
+    }
+
     if (!lua_isstring(L, 1))
     {
-        luaL_error(L, "variable name must be a string");
+        luaL_error(L, toStringz("variable name must be a string"));
         return 1;
     }
 
@@ -136,15 +158,38 @@ int lget_format_variable(lua_State* L)
     if (variableName !in Formatter.formatValues)
         lua_pushnil(L);
     else
-        lua_pushstring(L, toStringz(Formatter.formatValues[variableName]()));
+    {
+        auto length = lua_gettop(L);
+        string[] args;
+        args.length = length - 1;
+        for (int i = 2 /* 1 is for variable name */ ; i <= length; ++i)
+        {
+            if (!lua_isstring(L, i))
+            {
+                luaL_error(L, toStringz("index" ~ i.to!string ~ "is not a string"));
+                return 0;
+            }
+
+            string s = cast(string) fromStringz(lua_tostring(L, i));
+            args[i] = s;
+        }
+
+        lua_pushstring(L, toStringz(Formatter.formatValues[variableName](args)));
+    }
     return 1;
 }
 
 int lset_format_variable(lua_State* L)
 {
+    if (lua_gettop(L) != 3)
+    {
+        luaL_error(L, toStringz("set_format_variable needs 3 paramters"));
+        return 0;
+    }
+
     if (!lua_isstring(L, 1))
     {
-        luaL_error(L, "format variable name is must be a string");
+        luaL_error(L, toStringz("format variable name is must be a string"));
         return 0;
     }
 
@@ -154,7 +199,16 @@ int lset_format_variable(lua_State* L)
         return 0;
     }
 
-    string variableName = cast(string) fromStringz(lua_tostring(L, 1));
+    if (!lua_isinteger(L, 3))
+    {
+        luaL_error(L, toStringz("paramter length is must be a integer"));
+        return 0;
+    }
+
+    string variable = cast(string) fromStringz(lua_tostring(L, 1));
+    lua_Integer length = lua_tointeger(L, 3);
+    string[] slices = variable.split(';');
+    string variableName = slices[0];
 
     if (variableName in Formatter.formatValues)
     {
@@ -166,9 +220,13 @@ int lset_format_variable(lua_State* L)
     lua_pushvalue(L, 2);
     lua_setglobal(L, lglobalName);
 
-    Formatter.formatValues[variableName] = delegate() {
+    Formatter.formatValues[variableName] = delegate(string[] args) @trusted {
         lua_getglobal(L, lglobalName);
-        lua_pcall(L, 0, 1, 0);
+        foreach (arg; args)
+        {
+            lua_pushstring(L, toStringz(arg));
+        }
+        lua_pcall(L, cast(int) slices.length - 1, 1, 0);
 
         if (!lua_isstring(L, -1))
         {

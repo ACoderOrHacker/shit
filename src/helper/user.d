@@ -4,7 +4,7 @@ import std.stdio;
 import std.string;
 import std.process : environment;
 
-string getUserName()
+string getUserName() @trusted
 {
     version (Windows)
     {
@@ -17,7 +17,7 @@ string getUserName()
     return user;
 }
 
-string getHostName()
+string getHostName() @trusted
 {
     version (Windows)
     {
