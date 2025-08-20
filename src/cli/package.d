@@ -333,6 +333,8 @@ extern (C) export int cliMain(int argc, const(char)** argv)
             writedConfig.enablePackages = writedEnabledPackages;
 
             writePkgmanConfig(writedConfig);
+
+            log("package `" ~ pkgname ~ "` has disabled successfully");
         }
 
         void enableHandler(string option, string pkgname)
@@ -348,6 +350,8 @@ extern (C) export int cliMain(int argc, const(char)** argv)
             config.enablePackages ~= pkgname;
 
             writePkgmanConfig(config);
+
+            log("package `" ~ pkgname ~ "` has enabled successfully");
         }
 
         void createPackageHandler(string option, string optfile)
