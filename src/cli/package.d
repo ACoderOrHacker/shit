@@ -262,7 +262,7 @@ extern (C) export int cliMain(int argc, const(char)** argv)
         {
             outputInformation();
 
-            Package pkg = new Package(file);
+            shared(Package) pkg = new shared Package(file);
             try
             {
                 pkg.install();
@@ -280,7 +280,7 @@ extern (C) export int cliMain(int argc, const(char)** argv)
         {
             outputInformation();
 
-            Package pkg = new Package(file);
+            shared(Package) pkg = new shared Package(file);
             try
             {
                 pkg.uninstall();
@@ -298,21 +298,35 @@ extern (C) export int cliMain(int argc, const(char)** argv)
         {
             outputInformation();
 
-            Package pkg = new Package(optfile);
+            auto packages = getPackages();
+            if (defaultPackageType !in packages)
+            {
+                log("unregistered package `" ~ defaultPackageType ~ "`");
+                log("registered packages: ");
+                foreach (shared(Package) pkg; packages)
+                {
+                    log("  " ~ pkg.packageType);
+                }
+                exit(1);
+            }
 
-            pkg.writeDefaultPackage(defaultPackageType);
+            shared(Package) pkg = packages[defaultPackageType];
+            pkg.setFile(optfile);
+
+            pkg.writeDefaultPackage();
 
             log("package `" ~ optfile ~ "` has created successfully");
         }
 
         auto helpInformation = getopt(
             args,
+            std.getopt.config.bundling,
+            "type|t", "the type to create default package", &defaultPackageType,
             "repl|r", "run repl shell", &replHandler,
             "execute|e", "execute a command", &executeHandler,
             "install|i", "install a package", &installHandler,
             "uninstall|u", "uninstall a package", &uninstallHandler,
             "create|c", "create a default package", &createPackageHandler,
-            "type|t", "the type to create default package", &defaultPackageType
         );
 
         if (helpInformation.helpWanted)
@@ -324,6 +338,11 @@ extern (C) export int cliMain(int argc, const(char)** argv)
     catch (ExitSignal e)
     {
         return e.getCode();
+    }
+    catch (GetOptException e)
+    {
+        log("command line error: " ~ e.msg);
+        return 1;
     }
     catch (Exception e)
     {

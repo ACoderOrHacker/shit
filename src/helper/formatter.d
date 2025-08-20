@@ -15,13 +15,13 @@ enum FormatSliceType : ubyte
     Variable
 }
 
-struct FormatSlice
+export struct FormatSlice
 {
     FormatSliceType type;
     string str;
 }
 
-FormatSlice[] parseFormatString(string input)
+export FormatSlice[] parseFormatString(string input)
 {
     FormatSlice[] result;
     size_t i = 0;
@@ -88,7 +88,7 @@ FormatSlice[] parseFormatString(string input)
     return result;
 }
 
-synchronized class Formatter
+export synchronized class Formatter
 {
 
     private static FormatValueFunc[string] values_;

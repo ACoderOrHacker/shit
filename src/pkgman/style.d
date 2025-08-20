@@ -15,11 +15,21 @@ class StylePackageInfo : PackageInfo
     string[string] styles;
 }
 
-class StylePackage : Package
+synchronized class StylePackage : Package
 {
     final this(string file)
     {
         super(file);
+    }
+
+    final this()
+    {
+    }
+
+    @property
+    override string packageType()
+    {
+        return "style";
     }
 
     override protected PackageInfo createPackageInfo()
@@ -53,24 +63,14 @@ class StylePackage : Package
         }
     }
 
-    override PackageInfo defaultPackage(string pkgtype)
+    override PackageInfo defaultPackage()
     {
-        PackageInfo info = super.defaultPackage(pkgtype);
+        PackageInfo info = super.defaultPackage();
         StylePackageInfo styleinfo = cast(StylePackageInfo) info;
 
         styleinfo.styles["main.lua"] = "";
 
         return info;
-    }
-
-    PackageInfo defaultPackage()
-    {
-        return this.defaultPackage("style");
-    }
-
-    void writeDefaultPackage()
-    {
-        writePackage(defaultPackage());
     }
 }
 
@@ -110,6 +110,5 @@ class StyleExtensionRunner : ExtensionRunner
 
 static this()
 {
-    new ExtensionRunnerRegistry()
-        .register!StyleExtensionRunner("style");
+    registerExtension!(StyleExtensionRunner, StylePackage)("style");
 }
