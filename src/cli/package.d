@@ -4,7 +4,7 @@ import std.file : exists, read, getcwd, FileException;
 import std.path : buildPath;
 import std.stdio : stdout, stderr, writeln, writefln;
 import std.format : format;
-import std.conv : to;
+import std.conv : to, ConvException;
 import std.algorithm : startsWith, endsWith, find, filter;
 import std.array;
 import std.ascii : isControl;
@@ -85,7 +85,7 @@ export void executeCmdLine(GlobalConfig config)
     cliExecute(config, command);
 }
 
-export int replMain()
+export int replMain(bool loadingPackage)
 {
 
     outputInformation();
@@ -144,28 +144,31 @@ export int replMain()
         }
     }
 
-    try
+    if (loadingPackage)
     {
-        runners = getRunners();
+        try
+        {
+            runners = getRunners();
 
-        runAll();
-    }
-    catch (ExtensionRunException e)
-    {
-        log("error when running extensions...");
-        log("  details: " ~ e.msg);
-    }
-    catch (BadPkgmanConfigException e)
-    {
-        log("bad package configure: " ~ e.msg);
-    }
-    catch (PkgmanConfigNotFoundException e)
-    {
-        log("pkgman configure not found: " ~ e.msg);
-    }
-    catch (FileException e)
-    {
-        log("bad read for .pkgtype: " ~ e.msg);
+            runAll();
+        }
+        catch (ExtensionRunException e)
+        {
+            log("error when running extensions...");
+            log("  details: " ~ e.msg);
+        }
+        catch (BadPkgmanConfigException e)
+        {
+            log("bad package configure: " ~ e.msg);
+        }
+        catch (PkgmanConfigNotFoundException e)
+        {
+            log("pkgman configure not found: " ~ e.msg);
+        }
+        catch (FileException e)
+        {
+            log("bad read for .pkgtype: " ~ e.msg);
+        }
     }
 
     try
@@ -178,11 +181,13 @@ export int replMain()
     }
     catch (ExitSignal e)
     {
-        destroyAll();
+        if (loadingPackage)
+            destroyAll();
         return e.getCode(); // exit
     }
 
-    destroyAll();
+    if (loadingPackage)
+        destroyAll();
     return 0;
 }
 
@@ -261,14 +266,15 @@ extern (C) export int cliMain(int argc, const(char)** argv)
 
         if (args.length == 1)
         {
-            return replMain();
+            return replMain(true);
         }
 
-        string defaultPackageType;
+        string defaultPackageType = "";
+        bool loadingPackage = true;
 
         void replHandler(string option)
         {
-            exit(replMain());
+            exit(replMain(loadingPackage));
         }
 
         void executeHandler(string option, string command)
@@ -348,6 +354,13 @@ extern (C) export int cliMain(int argc, const(char)** argv)
         {
             outputInformation();
 
+            if (defaultPackageType == "")
+            {
+                new shared Package(optfile).writeDefaultPackage();
+                log("warning: you created a empty package");
+                log("package `" ~ optfile ~ "` has created successfully.");
+            }
+
             auto packages = getPackages();
             if (defaultPackageType !in packages)
             {
@@ -373,6 +386,7 @@ extern (C) export int cliMain(int argc, const(char)** argv)
             std.getopt.config.bundling,
 
             "type|t", "the type to create default package", &defaultPackageType,
+            "loading-packages", &loadingPackage,
 
             "repl|r", "run repl shell", &replHandler,
             "execute|e", "execute a command", &executeHandler,
@@ -397,6 +411,10 @@ extern (C) export int cliMain(int argc, const(char)** argv)
     {
         log("command line error: " ~ e.msg);
         return 1;
+    }
+    catch (ConvException e)
+    {
+        log(e.msg);
     }
     catch (Exception e)
     {
