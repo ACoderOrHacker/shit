@@ -6,6 +6,7 @@ import std.path;
 import std.json;
 import std.conv;
 import shit.configs.project;
+public import shit.configs.global;
 import pkgman.configs;
 public import pkgman.archive;
 
@@ -61,8 +62,14 @@ export class PackageInfo
     string license;
 }
 
-export class Package
+export synchronized class Package
 {
+    @property
+    string packageType()
+    {
+        return "";
+    }
+
     protected void addMember(T)(ZipArchive ar, string name, T data)
     {
         ArchiveMember member = new ArchiveMember;
@@ -87,11 +94,11 @@ export class Package
     {
     }
 
-    protected PackageInfo defaultPackage(string pkgtype)
+    PackageInfo defaultPackage()
     {
         PackageInfo info = createPackageInfo();
 
-        info.type = pkgtype;
+        info.type = packageType;
         info.name = "";
         info.ver = "";
         info.desc = "";
@@ -102,6 +109,15 @@ export class Package
     }
 
     final this(string file)
+    {
+        this.file_ = file;
+    }
+
+    this()
+    {
+    }
+
+    void setFile(string file)
     {
         this.file_ = file;
     }
@@ -218,9 +234,9 @@ export class Package
         rmdirRecurse(extensionPath);
     }
 
-    void writeDefaultPackage(string pkgtype)
+    void writeDefaultPackage()
     {
-        writePackage(defaultPackage(pkgtype));
+        writePackage(defaultPackage());
     }
 
     @property
@@ -235,26 +251,53 @@ export class Package
 interface ExtensionRunner
 {
     void run(string /* package name */ ,
-        string /* package path */ ) shared;
+        string /* package path */ ,
+        ref GlobalConfig) shared;
+
+    void destroy(string /* package name */ ,
+        string /* package path */ ,
+        ref GlobalConfig) shared;
 }
 
 /// Runner API
 alias Runners = ExtensionRunner[string];
+alias Packages = Package[string];
 
 shared(Runners) runners;
+shared(Packages) packages;
 
 export ref shared(Runners) getRunners()
 {
     return runners;
 }
 
+export ref shared(Packages) getPackages()
+{
+    return packages;
+}
+
 export class ExtensionRunnerRegistry
 {
-    ExtensionRunnerRegistry register(Runner)(string name)
+    static void register(Runner)(string name)
     {
         ref shared(Runners) runners_ = getRunners();
-        runners_[name] = new Runner;
 
-        return this;
+        runners_[name] = new Runner;
     }
+}
+
+export class PackageRegistry
+{
+    static void register(Package)(string name)
+    {
+        ref shared(Packages) packages = getPackages();
+
+        packages[name] = new shared Package;
+    }
+}
+
+void registerExtension(Runner, Package)(string name)
+{
+    ExtensionRunnerRegistry.register!Runner(name);
+    PackageRegistry.register!Package(name);
 }

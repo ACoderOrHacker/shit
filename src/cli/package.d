@@ -1,14 +1,16 @@
 module cli;
 
-import std.file;
-import std.path;
-import std.stdio;
+import std.file : exists, read, getcwd, FileException;
+import std.path : buildPath;
+import std.stdio : stdout, stderr, writeln, writefln;
 import std.format : format;
-import std.conv : to;
-import std.algorithm : startsWith, endsWith;
+import std.conv : to, ConvException;
+import std.algorithm : startsWith, endsWith, find, filter;
+import std.array;
 import std.ascii : isControl;
 import std.utf;
 import std.getopt;
+import std.range;
 import termcolor;
 import helper;
 import helper.signal;
@@ -20,15 +22,14 @@ import shit.readline;
 import pkgman.basic;
 import pkgman.configs;
 
-@property
-string home()
+export void outputInformation()
 {
-    string home_ = getHome();
-    if (home_.endsWith(dirSeparator))
-    {
-        home_ = home_[0 .. $ - dirSeparator.length]; // split dir separator
-    }
-    return home_;
+    // output information
+    writefln("SHIT shell v%s, a powerful and modern terminal", shitFullVersion);
+    writefln("On [%s, %s], on %s mode",
+        shitOs, shitArchitecture, shitMode);
+    writeln("Copyright (C) 2025, ACoderOrHacker");
+    writeln();
 }
 
 export void setDefaultTitle()
@@ -36,7 +37,7 @@ export void setDefaultTitle()
     setConsoleTitle(format("SHIT shell v%s", shitFullVersion));
 }
 
-export void cliExecute(ref GlobalConfig config, string command)
+export void cliExecute(ref GlobalConfig config, string command, bool showExitcode = true)
 {
     Command cmd = Command("");
     try
@@ -52,7 +53,7 @@ export void cliExecute(ref GlobalConfig config, string command)
     try
     {
         auto result = executeCommand(config, cmd);
-        if (config.showExitCode)
+        if (config.showExitCode && showExitcode)
             log("exit code " ~ result.getExitCode().to!string);
     }
     catch (ExecuteException e)
@@ -65,37 +66,12 @@ export void cliExecute(ref GlobalConfig config, string command)
     }
 }
 
-export void executeCmdLine(ref GlobalConfig config, string home)
+export void executeCmdLine(GlobalConfig config)
 {
     scope (exit)
         setDefaultTitle();
 
-    string path = getcwd();
-    string showPath = replaceFirst(path, home, "~");
-    string gitBranch;
-    try
-    {
-        gitBranch = new GitData(config.gitDir, path, true).currentBranch;
-    }
-    catch (GitRepoNotFoundException)
-    {
-        gitBranch = null;
-    }
-
-    string branchInfo = gitBranch == null ? "" : " (" ~ gitBranch ~ ")";
-
-    stdout.setColor(green)
-        .write(getUserName(), "@", getHostName(), " ");
-    stdout.setColor(reset)
-        .setColor(brightBlue)
-        .write(showPath);
-    stdout.setColor(reset)
-        .setColor(yellow)
-        .writeln(branchInfo);
-    stdout.setColor(reset);
-    string indicatorOfCommand = isAdmin() ? "# " : "$ ";
-    stderr.write(indicatorOfCommand);
-    stderr.flush();
+    config.prompts();
 
     // Read command from stdin
     string command = new DefaultReadline().read().toUTF8;
@@ -109,27 +85,30 @@ export void executeCmdLine(ref GlobalConfig config, string home)
     cliExecute(config, command);
 }
 
-export int replMain(ref GlobalConfig globalConfig)
+export int replMain(bool loadingPackage)
 {
-    // output information
-    writefln("SHIT shell v%s, a powerful and modern terminal", shitFullVersion);
-    writefln("On [%s, %s], on %s mode",
-        shitOs, shitArchitecture, shitMode);
-    writeln("Copyright (C) 2025, ACoderOrHacker");
-    writeln();
 
+    outputInformation();
+    GlobalConfig globalConfig = initWithGlobalConfig();
     setDefaultTitle();
 
     // Run runners
-    try
-    {
-        PkgmanConfig pkgconfig = readPkgmanConfig();
-        shared(Runners) runners = getRunners();
+    PkgmanConfig pkgconfig = getPkgmanConfig();
+    shared(Runners) runners;
 
+    void runAll()
+    {
         foreach (i, pkg; pkgconfig.enablePackages)
         {
             string path = buildPath(packagesPath, pkg);
-            string pkgtype = cast(string) read(buildPath(path, ".pkgtype"));
+            string pkgtypePath = buildPath(path, ".pkgtype");
+
+            if (!exists(pkgtypePath))
+            {
+                log("bad pkgtype `" ~ pkgtypePath ~ "`");
+                break;
+            }
+            string pkgtype = cast(string) read(pkgtypePath);
 
             if (pkgtype !in runners)
             {
@@ -137,13 +116,134 @@ export int replMain(ref GlobalConfig globalConfig)
                 break;
             }
 
-            runners[pkgtype].run(pkg, path);
+            runners[pkgtype].run(pkg, path, globalConfig);
         }
     }
-    catch (ExtensionRunException e)
+
+    void destroyAll()
     {
-        log("error when running extensions...");
-        log("  details: " ~ e.msg);
+        foreach (i, pkg; pkgconfig.enablePackages)
+        {
+            string path = buildPath(packagesPath, pkg);
+            string pkgtypePath = buildPath(path, ".pkgtype");
+
+            if (!exists(pkgtypePath))
+            {
+                log("bad pkgtype `" ~ pkgtypePath ~ "`");
+                break;
+            }
+            string pkgtype = cast(string) read(pkgtypePath);
+
+            if (pkgtype !in runners)
+            {
+                log("unsupported package type: " ~ pkgtype);
+                break;
+            }
+
+            runners[pkgtype].destroy(pkg, path, globalConfig);
+        }
+    }
+
+    if (loadingPackage)
+    {
+        try
+        {
+            runners = getRunners();
+
+            runAll();
+        }
+        catch (ExtensionRunException e)
+        {
+            log("error when running extensions...");
+            log("  details: " ~ e.msg);
+        }
+        catch (BadPkgmanConfigException e)
+        {
+            log("bad package configure: " ~ e.msg);
+        }
+        catch (PkgmanConfigNotFoundException e)
+        {
+            log("pkgman configure not found: " ~ e.msg);
+        }
+        catch (FileException e)
+        {
+            log("bad read for .pkgtype: " ~ e.msg);
+        }
+    }
+
+    try
+    {
+        while (true)
+        {
+            executeCmdLine(globalConfig);
+            writeln();
+        }
+    }
+    catch (ExitSignal e)
+    {
+        if (loadingPackage)
+            destroyAll();
+        return e.getCode(); // exit
+    }
+
+    if (loadingPackage)
+        destroyAll();
+    return 0;
+}
+
+export GlobalConfig initWithGlobalConfig()
+{
+    GlobalConfig globalConfig;
+
+    bool isDefault = false;
+    try
+    {
+        globalConfig = getGlobalConfig();
+        startUp(globalConfig);
+    }
+    catch (BadGlobalConfigException e)
+    {
+        log("startup error(bad global configures): " ~ e.msg);
+        isDefault = true;
+    }
+    catch (GlobalConfigNotFoundException e)
+    {
+        log("warning: global configures not found: " ~ e.msg);
+        isDefault = true;
+    }
+    catch (StartUpException e)
+    {
+        log("startup error(bad configures): " ~ e.msg);
+        isDefault = true;
+    }
+
+    if (isDefault)
+    {
+        globalConfig.showExitCode = false;
+        globalConfig.defaultPath = getHome();
+        try
+        {
+            startUp(globalConfig);
+        }
+        catch (StartUpException e)
+        {
+            // that is the default configuration,
+            // if it fails, then maybe the getHome or anyelse gets bad works
+            internalError(e.msg);
+            exit(1);
+        }
+    }
+    globalConfig.prompts = delegate() { stdout.write(getcwd(), " $ "); };
+
+    return globalConfig;
+}
+
+export PkgmanConfig getPkgmanConfig()
+{
+    PkgmanConfig config;
+    try
+    {
+        config = readPkgmanConfig();
     }
     catch (BadPkgmanConfigException e)
     {
@@ -153,25 +253,7 @@ export int replMain(ref GlobalConfig globalConfig)
     {
         log("pkgman configure not found: " ~ e.msg);
     }
-    catch (FileException e)
-    {
-        log("bad read for .pkgtype: " ~ e.msg);
-    }
-
-    try
-    {
-        while (true)
-        {
-            executeCmdLine(globalConfig, home);
-            writeln();
-        }
-    }
-    catch (ExitSignal e)
-    {
-        return e.getCode(); // exit
-    }
-
-    return 0;
+    return config;
 }
 
 extern (C) export int cliMain(int argc, const(char)** argv)
@@ -180,77 +262,143 @@ extern (C) export int cliMain(int argc, const(char)** argv)
 
     try
     {
-        GlobalConfig globalConfig;
-
-        bool isDefault = false;
-        try
-        {
-            globalConfig = getGlobalConfig();
-            startUp(globalConfig);
-        }
-        catch (BadGlobalConfigException e)
-        {
-            log("startup error(bad global configures): " ~ e.msg);
-            isDefault = true;
-        }
-        catch (GlobalConfigNotFoundException e)
-        {
-            log("warning: global configures not found: " ~ e.msg);
-            isDefault = true;
-        }
-        catch (StartUpException e)
-        {
-            log("startup error(bad configures): " ~ e.msg);
-            isDefault = true;
-        }
-
-        if (isDefault)
-        {
-            globalConfig.showExitCode = false;
-            globalConfig.defaultPath = home;
-            try
-            {
-                startUp(globalConfig);
-            }
-            catch (StartUpException e)
-            {
-                // that is the default configuration,
-                // if it fails, then maybe the getHome or anyelse gets bad works
-                internalError(e.msg);
-                return 1;
-            }
-        }
-
         string[] args = convertToStringArray(argv, argc);
 
         if (args.length == 1)
         {
-            return replMain(globalConfig);
+            return replMain(true);
         }
 
-        string command;
-        string packageName;
+        string defaultPackageType = "";
+        bool loadingPackage = true;
 
         void replHandler(string option)
         {
-            exit(replMain(globalConfig));
+            exit(replMain(loadingPackage));
         }
 
         void executeHandler(string option, string command)
         {
-            cliExecute(globalConfig, command);
+            GlobalConfig config = initWithGlobalConfig();
+            cliExecute(config, command, false);
         }
 
         void installHandler(string option, string file)
         {
-            // TODO:
+            outputInformation();
+
+            shared(Package) pkg = new shared Package(file);
+            try
+            {
+                pkg.install();
+
+                log("package `" ~ file ~ "` has installed successfully");
+            }
+            catch (Exception e)
+            {
+                log("error when installing package `" ~ file ~ "`: " ~ e.msg);
+                exit(1);
+            }
+        }
+
+        void uninstallHandler(string option, string file)
+        {
+            outputInformation();
+
+            shared(Package) pkg = new shared Package(file);
+            try
+            {
+                pkg.uninstall();
+
+                log("package `" ~ file ~ "` has uninstalled successfully");
+            }
+            catch (Exception e)
+            {
+                log("error when uninstalling package `" ~ file ~ "`: " ~ e.msg);
+                exit(1);
+            }
+        }
+
+        void disableHandler(string option, string pkgname)
+        {
+            PkgmanConfig config = getPkgmanConfig();
+
+            if (config.enablePackages.length == 0 || config.enablePackages.find(pkgname).empty)
+            {
+                log("warning: `" ~ pkgname ~ "` is not in `enabled-packages`");
+            }
+
+            auto writedEnabledPackages = config.enablePackages.filter!(s => s != pkgname).array;
+            PkgmanConfig writedConfig;
+            writedConfig.enablePackages = writedEnabledPackages;
+
+            writePkgmanConfig(writedConfig);
+
+            log("package `" ~ pkgname ~ "` has disabled successfully");
+        }
+
+        void enableHandler(string option, string pkgname)
+        {
+            PkgmanConfig config = getPkgmanConfig();
+
+            if (!config.enablePackages.find(pkgname).empty)
+            {
+                log("`" ~ pkgname ~ "` is already in `enabled-packages`");
+                exit(1);
+            }
+
+            config.enablePackages ~= pkgname;
+
+            writePkgmanConfig(config);
+
+            log("package `" ~ pkgname ~ "` has enabled successfully");
+        }
+
+        void createPackageHandler(string option, string optfile)
+        {
+            outputInformation();
+
+            if (defaultPackageType == "")
+            {
+                new shared Package(optfile).writeDefaultPackage();
+                log("warning: you created a empty package");
+                log("package `" ~ optfile ~ "` has created successfully.");
+            }
+
+            auto packages = getPackages();
+            if (defaultPackageType !in packages)
+            {
+                log("unregistered package `" ~ defaultPackageType ~ "`");
+                log("registered packages: ");
+                foreach (shared(Package) pkg; packages)
+                {
+                    log("  " ~ pkg.packageType);
+                }
+                exit(1);
+            }
+
+            shared(Package) pkg = packages[defaultPackageType];
+            pkg.setFile(optfile);
+
+            pkg.writeDefaultPackage();
+
+            log("package `" ~ optfile ~ "` has created successfully");
         }
 
         auto helpInformation = getopt(
             args,
+            std.getopt.config.bundling,
+
+            "type|t", "the type to create default package", &defaultPackageType,
+            "loading-packages", &loadingPackage,
+
             "repl|r", "run repl shell", &replHandler,
             "execute|e", "execute a command", &executeHandler,
-            "install|i", "install a package", &installHandler
+            "install|i", "install a package", &installHandler,
+            "uninstall|u", "uninstall a package", &uninstallHandler,
+            "disable", "disable a installed package", &disableHandler,
+            "enable", "enable a installed package", &enableHandler,
+            "create|c", "create a default package", &createPackageHandler,
         );
 
         if (helpInformation.helpWanted)
@@ -262,6 +410,15 @@ extern (C) export int cliMain(int argc, const(char)** argv)
     catch (ExitSignal e)
     {
         return e.getCode();
+    }
+    catch (GetOptException e)
+    {
+        log("command line error: " ~ e.msg);
+        return 1;
+    }
+    catch (ConvException e)
+    {
+        log(e.msg);
     }
     catch (Exception e)
     {

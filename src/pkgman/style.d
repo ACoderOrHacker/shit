@@ -8,17 +8,28 @@ import shit.configs.basic;
 import shit.configs.project;
 import pkgman.basic;
 import luaapi;
+import luashit;
 
 class StylePackageInfo : PackageInfo
 {
     string[string] styles;
 }
 
-class StylePackage : Package
+synchronized class StylePackage : Package
 {
     final this(string file)
     {
         super(file);
+    }
+
+    final this()
+    {
+    }
+
+    @property
+    override string packageType()
+    {
+        return "style";
     }
 
     override protected PackageInfo createPackageInfo()
@@ -52,54 +63,52 @@ class StylePackage : Package
         }
     }
 
-    override PackageInfo defaultPackage(string pkgtype)
+    override PackageInfo defaultPackage()
     {
-        PackageInfo info = super.defaultPackage(pkgtype);
+        PackageInfo info = super.defaultPackage();
         StylePackageInfo styleinfo = cast(StylePackageInfo) info;
 
         styleinfo.styles["main.lua"] = "";
 
         return info;
     }
-
-    PackageInfo defaultPackage()
-    {
-        return this.defaultPackage("style");
-    }
-
-    void writeDefaultPackage() {
-        writePackage(defaultPackage());
-    }
 }
 
 class StyleExtensionRunner : ExtensionRunner
 {
-    private void runOneStyleFile(string name, string file) shared
+    private void runOneStyleFile(string name, string file, ref GlobalConfig config) shared
     {
+        extensions[name] = luaL_newstate();
         if (!exists(file))
-            throw new ExtensionRunException("extension `" ~ name ~"`(file " ~ file ~ ") not found");
+            throw new ExtensionRunException("extension `" ~ name ~ "`(file " ~ file ~ ") not found");
 
-        lua_State* extension = luaL_newstate();
+        lua_State* extension = extensions[name];
         luaL_openlibs(extension);
+        luaopen_luashit(extension, config);
 
-        if (luaL_dofile(extension, (file ~ "\0").ptr)) // oh my god! Damn!
-            // the \0 must add because lua is written by C
-            {
+        if (luaL_dofile(extension, toStringz(file)) != LUA_OK)
+        {
             throw new ExtensionRunException("lua execute error: " ~ lua_tostring(extension, -1)
                     .to!string);
         }
-
-        lua_close(extension);
     }
 
-    override void run(string packageName, string packagePath) shared
+    override void run(string packageName, string packagePath, ref GlobalConfig config) shared
     {
-        runOneStyleFile(packageName, buildPath(packagePath, "styles", "main.lua"));
+        runOneStyleFile(packageName, buildPath(packagePath, "styles", "main.lua"), config);
     }
+
+    override void destroy(string packageName, string packagePath, ref GlobalConfig config) shared
+    {
+        if (packageName !in extensions)
+            return;
+        lua_close(extensions[packageName]);
+    }
+
+    private static lua_State*[string] extensions;
 }
 
 static this()
 {
-    new ExtensionRunnerRegistry()
-        .register!StyleExtensionRunner("style");
+    registerExtension!(StyleExtensionRunner, StylePackage)("style");
 }

@@ -25,11 +25,14 @@ export class BadGlobalConfigException : Exception
     }
 }
 
+alias WritePromptsFunc = void delegate();
+
 export struct GlobalConfig
 {
     string defaultPath;
     bool showExitCode;
-    string gitDir;
+
+    WritePromptsFunc prompts;
 }
 
 export GlobalConfig getGlobalConfig()
@@ -83,24 +86,6 @@ export GlobalConfig getGlobalConfig()
     {
         throw new GlobalConfigNotFoundException(
             "Unable to read showExitCode from global configuration file");
-    }
-
-    try
-    {
-        JSONValue jGitDir = value["git-executable-dir"];
-        if (jGitDir.type == JSONType.string)
-        {
-            config.gitDir = jGitDir.str == "" ? null : jGitDir.str;
-        }
-        else
-        {
-            throw new BadGlobalConfigException("git-executable-dir is not a string");
-        }
-    }
-    catch (JSONException e)
-    {
-        throw new GlobalConfigNotFoundException(
-            "Unable to read git-executable-dir from global configuration file");
     }
 
     return config;

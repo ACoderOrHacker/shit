@@ -1,5 +1,4 @@
 {
     "showExitCode": "true",
-    "defaultPath": "~",
-    "git-executable-dir": ""
+    "defaultPath": "~"
 }

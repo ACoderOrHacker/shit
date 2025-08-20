@@ -263,40 +263,43 @@ private string createLegacyColor(string name, int n)
         return (cast(char) toUpper(name[0])) ~ name[1 .. $];
     }
 
-    string color = "enum " ~ name ~ " = Legacy16Color(" ~ n.to!string ~ ");\n";
+    string color = name ~ " = Legacy16Color(" ~ n.to!string ~ "),\n";
 
-    string onColor = "enum on" ~ getUpperName() ~ " = Legacy16Color(" ~ (n + 10).to!string ~ ");\n";
+    string onColor = "on" ~ getUpperName() ~ " = Legacy16Color(" ~ (n + 10).to!string ~ "),\n";
 
-    string brightColor = "enum bright" ~ getUpperName() ~ " = Legacy16Color(" ~ (n + 60)
-        .to!string ~ ");\n";
+    string brightColor = "bright" ~ getUpperName() ~ " = Legacy16Color(" ~ (n + 60)
+        .to!string ~ "),\n";
 
-    string onBrightColor = "enum onBright" ~ getUpperName() ~ " = Legacy16Color(" ~ (n + 70)
-        .to!string ~ ");\n";
+    string onBrightColor = "onBright" ~ getUpperName() ~ " = Legacy16Color(" ~ (n + 70)
+        .to!string ~ "),\n";
 
     return color ~ onColor ~ brightColor ~ onBrightColor;
 }
 
 private string createLegacyStyle(string name, int n)
 {
-    return "enum " ~ name ~ " = Legacy16Color(" ~ n.to!string ~ ");\n";
+    return name ~ " = Legacy16Color(" ~ n.to!string ~ "),\n";
 }
 
 // Legacy16 color definations
-
-mixin(createLegacyColor("reset", 0));
-mixin(createLegacyColor("grey", 30));
-mixin(createLegacyColor("red", 31));
-mixin(createLegacyColor("green", 32));
-mixin(createLegacyColor("yellow", 33));
-mixin(createLegacyColor("blue", 34));
-mixin(createLegacyColor("magenta", 35));
-mixin(createLegacyColor("cyan", 36));
-mixin(createLegacyColor("white", 37));
-mixin(createLegacyStyle("bold", 1));
-mixin(createLegacyStyle("dark", 2));
-mixin(createLegacyStyle("italic", 3));
-mixin(createLegacyStyle("underline", 4));
-mixin(createLegacyStyle("blink", 5));
-mixin(createLegacyStyle("reverse", 7));
-mixin(createLegacyStyle("concealed", 8));
-mixin(createLegacyStyle("crossed", 9));
+mixin(
+    "enum Colors {" ~
+        createLegacyColor("reset", 0) ~
+        createLegacyColor("grey", 30) ~
+        createLegacyColor("red", 31) ~
+        createLegacyColor("green", 32) ~
+        createLegacyColor("yellow", 33) ~
+        createLegacyColor("blue", 34) ~
+        createLegacyColor("magenta", 35) ~
+        createLegacyColor("cyan", 36) ~
+        createLegacyColor("white", 37) ~
+        createLegacyStyle("bold", 1) ~
+        createLegacyStyle("dark", 2) ~
+        createLegacyStyle("italic", 3) ~
+        createLegacyStyle("underline", 4) ~
+        createLegacyStyle("blink", 5) ~
+        createLegacyStyle("reverse", 7) ~
+        createLegacyStyle("concealed", 8) ~
+        createLegacyStyle("crossed", 9)
+        ~ "}"
+);

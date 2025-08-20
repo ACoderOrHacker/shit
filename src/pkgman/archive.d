@@ -22,7 +22,8 @@ class ArchiveManager
 
     static void archiveDir(string dirPath, string zipFilePath)
     {
-        enforce(exists(dirPath) && isDir(dirPath), "directory not found: " ~ dirPath);
+        if (!(exists(dirPath) && isDir(dirPath)))
+            throw new FileException("directory not found: " ~ dirPath);
 
         auto archive = new ZipArchive;
         foreach (entry; dirEntries(dirPath, SpanMode.depth))
@@ -41,8 +42,12 @@ class ArchiveManager
 
     static void unarchive(string zipFilePath, string destDir)
     {
-        enforce(exists(zipFilePath) && isFile(zipFilePath), "zip file not found: " ~ zipFilePath);
-        auto archive = new ZipArchive(cast(ubyte[]) read(zipFilePath));
+        if (!(exists(zipFilePath) && isFile(zipFilePath)))
+            throw new FileException(
+                "zip file not found: " ~ zipFilePath);
+
+        auto archive = new ZipArchive(
+            cast(ubyte[]) read(zipFilePath));
         foreach (member; archive.directory)
         {
             archive.expand(member);

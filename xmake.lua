@@ -37,6 +37,7 @@ target("conbase")
     add_files("src/termcolor/**.d")
     add_files("src/shit/**.d")
     add_files("src/pkgman/**.d")
+    add_files("src/luashit/**.d")
     add_files("src/cli/**.d")
 
     add_packages("lua54", {public = true})
