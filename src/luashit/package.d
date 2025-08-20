@@ -43,7 +43,7 @@ private string[] popStringArray(lua_State* L)
 
     lua_Integer len = lua_rawlen(L, tableIndex);
     string[] result;
-    result.length = len;
+    result.length = cast(size_t) len;
 
     for (lua_Integer i = 1 /* lua index starts at 1 */ ; i <= len; ++i)
     {
@@ -55,7 +55,7 @@ private string[] popStringArray(lua_State* L)
             return null;
         }
 
-        result[i - 1] = cast(string) fromStringz(lua_tostring(L, -1));
+        result[cast(size_t) i - 1] = cast(string) fromStringz(lua_tostring(L, -1));
 
         lua_pop(L, 1);
     }
