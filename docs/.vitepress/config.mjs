@@ -38,7 +38,7 @@ export default defineConfig({
                     },
                     {
                         text: "Execute Commands",
-                        link: "/basic/execute.md"
+                        link: "/basic/execute-commands.md"
                     }
                 ]
             },
@@ -47,7 +47,7 @@ export default defineConfig({
                 items: [
                     {
                         text: "Create Packages",
-                        link: "/package-management/create.md"
+                        link: "/package-management/create-packages.md"
                     },
                     {
                         text: "Package Management in CLI",
