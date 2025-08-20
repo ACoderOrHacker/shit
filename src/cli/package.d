@@ -1,14 +1,16 @@
 module cli;
 
-import std.file;
-import std.path;
+import std.file : exists, read, getcwd, FileException;
+import std.path : buildPath;
 import std.stdio : stdout, stderr, writeln, writefln;
 import std.format : format;
 import std.conv : to;
-import std.algorithm : startsWith, endsWith;
+import std.algorithm : startsWith, endsWith, find, filter;
+import std.array;
 import std.ascii : isControl;
 import std.utf;
 import std.getopt;
+import std.range;
 import termcolor;
 import helper;
 import helper.signal;
@@ -20,7 +22,7 @@ import shit.readline;
 import pkgman.basic;
 import pkgman.configs;
 
-void outputInformation()
+export void outputInformation()
 {
     // output information
     writefln("SHIT shell v%s, a powerful and modern terminal", shitFullVersion);
@@ -91,7 +93,7 @@ export int replMain()
     setDefaultTitle();
 
     // Run runners
-    PkgmanConfig pkgconfig;
+    PkgmanConfig pkgconfig = getPkgmanConfig();
     shared(Runners) runners;
 
     void runAll()
@@ -144,7 +146,6 @@ export int replMain()
 
     try
     {
-        pkgconfig = readPkgmanConfig();
         runners = getRunners();
 
         runAll();
@@ -232,6 +233,24 @@ export GlobalConfig initWithGlobalConfig()
     return globalConfig;
 }
 
+export PkgmanConfig getPkgmanConfig()
+{
+    PkgmanConfig config;
+    try
+    {
+        config = readPkgmanConfig();
+    }
+    catch (BadPkgmanConfigException e)
+    {
+        log("bad package configure: " ~ e.msg);
+    }
+    catch (PkgmanConfigNotFoundException e)
+    {
+        log("pkgman configure not found: " ~ e.msg);
+    }
+    return config;
+}
+
 extern (C) export int cliMain(int argc, const(char)** argv)
 {
     initSignals();
@@ -294,6 +313,37 @@ extern (C) export int cliMain(int argc, const(char)** argv)
             }
         }
 
+        void disableHandler(string option, string pkgname)
+        {
+            PkgmanConfig config = getPkgmanConfig();
+
+            if (config.enablePackages.length == 0 || config.enablePackages.find(pkgname).empty)
+            {
+                log("warning: `" ~ pkgname ~ "` is not in `enabled-packages`");
+            }
+
+            auto writedEnabledPackages = config.enablePackages.filter!(s => s != pkgname).array;
+            PkgmanConfig writedConfig;
+            writedConfig.enablePackages = writedEnabledPackages;
+
+            writePkgmanConfig(writedConfig);
+        }
+
+        void enableHandler(string option, string pkgname)
+        {
+            PkgmanConfig config = getPkgmanConfig();
+
+            if (!config.enablePackages.find(pkgname).empty)
+            {
+                log("`" ~ pkgname ~ "` is already in `enabled-packages`");
+                exit(1);
+            }
+
+            config.enablePackages ~= pkgname;
+
+            writePkgmanConfig(config);
+        }
+
         void createPackageHandler(string option, string optfile)
         {
             outputInformation();
@@ -321,11 +371,15 @@ extern (C) export int cliMain(int argc, const(char)** argv)
         auto helpInformation = getopt(
             args,
             std.getopt.config.bundling,
+
             "type|t", "the type to create default package", &defaultPackageType,
+
             "repl|r", "run repl shell", &replHandler,
             "execute|e", "execute a command", &executeHandler,
             "install|i", "install a package", &installHandler,
             "uninstall|u", "uninstall a package", &uninstallHandler,
+            "disable", "disable a installed package", &disableHandler,
+            "enable", "enable a installed package", &enableHandler,
             "create|c", "create a default package", &createPackageHandler,
         );
 
