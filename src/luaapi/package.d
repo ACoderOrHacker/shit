@@ -1,6 +1,6 @@
 module luaapi;
 
-public import luaapi.lauxlib;
-public import luaapi.lua;
-public import luaapi.luaconf;
-public import luaapi.lualib;
+public import lauxlib;
+public import lua;
+public import luaconf;
+public import lualib;

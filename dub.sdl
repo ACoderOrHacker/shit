@@ -1,0 +1,9 @@
+name "shit"
+description "A powerful and modern terminal"
+authors "ACoderOrHacker"
+copyright "Copyright © 2025, ACoderOrHacker"
+license "Apache-2.0"
+
+lflags "-L/workspaces/shit/build" "-llua"
+targetPath "build"
+targetType "executable"

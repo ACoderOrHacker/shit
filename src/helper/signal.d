@@ -1,4 +1,4 @@
-module main.signal;
+module helper.signal;
 
 import core.stdc.signal;
 import core.stdc.stdio;

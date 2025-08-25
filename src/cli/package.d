@@ -233,7 +233,7 @@ export GlobalConfig initWithGlobalConfig()
             exit(1);
         }
     }
-    globalConfig.prompts = delegate() { stdout.write(getcwd(), " $ "); };
+    globalConfig.prompts = delegate() { stdout.write(getcwd(), " $ "); stdout.flush(); };
 
     return globalConfig;
 }
@@ -256,14 +256,12 @@ export PkgmanConfig getPkgmanConfig()
     return config;
 }
 
-extern (C) export int cliMain(int argc, const(char)** argv)
+export int cliDMain(string[] args)
 {
     initSignals();
 
     try
     {
-        string[] args = convertToStringArray(argv, argc);
-
         if (args.length == 1)
         {
             return replMain(true);
@@ -427,4 +425,9 @@ extern (C) export int cliMain(int argc, const(char)** argv)
     }
 
     return 0;
+}
+
+extern (C) export int cliDMain(int argc, const(char) **argv)
+{
+    return cliDMain(convertToStringArray(argv, argc));
 }

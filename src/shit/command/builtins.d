@@ -15,21 +15,24 @@ import helper.logger;
 
 export ExecuteResult builtinCd(ref GlobalConfig config, string[] args)
 {
-    scope (failure)
+    try
     {
-        log(format("cd: %s: No such file or directory", args[1]));
+        if (args.length == 2)
+        {
+            chdir(args[1]);
+        }
+        else
+        {
+            log("Usage: cd <directory>");
+        }
+
+        return ExecuteResult(0);
+    }
+    catch (Exception e)
+    {
+        log(format("cd: %s: No such file or directory: %s", args[1], e.msg));
         return ExecuteResult(1);
     }
-    if (args.length == 2)
-    {
-        chdir(args[1]);
-    }
-    else
-    {
-        log("Usage: cd <directory>");
-    }
-
-    return ExecuteResult(0);
 }
 
 export ExecuteResult builtinExit(ref GlobalConfig config, string[] args)

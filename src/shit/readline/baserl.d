@@ -58,7 +58,7 @@ public:
             iterator = result.utf32char;
             event = result.event;
 
-            if ((!event.isPrintableAscii) && event.vkey != VirtualKey.None && event.vkey != endKey)
+            if ((!event.isUtf8Input) && event.vkey != VirtualKey.None && event.vkey != endKey)
             {
                 if (!onEvent())
                     continue;

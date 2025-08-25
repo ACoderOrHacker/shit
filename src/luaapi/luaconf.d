@@ -6,7 +6,9 @@
 
 import core.stdc.limits;
 import core.stdc.stddef;
-import luaapi.lua;
+import core.stdc.stdlib;
+import core.stdc.locale;
+import lua;
 
 extern (C):
 

@@ -8,7 +8,7 @@
 import core.stdc.limits;
 import core.stdc.stddef;
 import core.stdc.stdarg;
-import luaapi.luaconf;
+import luaconf;
 
 extern (C):
 

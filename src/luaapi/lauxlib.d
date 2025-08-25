@@ -7,8 +7,8 @@
 import core.stdc.config;
 import core.stdc.stddef;
 import core.stdc.stdio;
-import luaapi.lua;
-import luaapi.luaconf;
+import lua;
+import luaconf;
 
 extern (C):
 

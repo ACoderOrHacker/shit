@@ -70,8 +70,8 @@ export class ConsoleReader
             throw new ReadCharException("failed read the utf-8 character");
         }
 
-        if (!ev.isPrintableAscii) // maybe a control character
-            return ReadResult(ev.ascii, ev);
+        //if (!ev.isPrintableAscii) // maybe a control character
+       //     return ReadResult(ev.ascii, ev);
 
         int charLen = utf8CharLength(ev.ascii);
         if (charLen < 1)
@@ -85,10 +85,6 @@ export class ConsoleReader
         while (bytesRead < charLen)
         {
             auto ch = reader.read();
-            if (!ch.isPrintableAscii)
-            {
-                throw new ReadCharException("failed read the utf-8 character");
-            }
 
             buffer[bytesRead] = ch.ascii;
 

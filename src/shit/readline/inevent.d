@@ -25,7 +25,7 @@ else
     static assert(false, "Unsupported platform");
 }
 
-enum VirtualKey : uint16_t
+enum VirtualKey : uint32_t
 {
     None = 0,
     Backspace = 8,
@@ -37,7 +37,7 @@ enum VirtualKey : uint16_t
     Escape = 27,
     Space = 32,
 
-    F1 = 127,
+    F1 = 0xd800, // utf-16 surrogate area (we not used)
     F2,
     F3,
     F4,
@@ -73,7 +73,9 @@ enum VirtualKey : uint16_t
     Insert,
     Delete,
 
-    CapsLock = 0x1010,
+    Utf8Input,
+
+    CapsLock,
     NumLock,
     ScrollLock
 }
@@ -86,13 +88,19 @@ export struct InputEvent
     @property
     bool isPrintableAscii() const
     {
-        return (cast(uint16_t) vkey) >= 32 && (cast(uint16_t) vkey) <= 126;
+        return (cast(uint32_t) vkey) >= 32 && (cast(uint32_t) vkey) <= 126;
     }
 
     @property
     char ascii() const
     {
         return cast(char) vkey;
+    }
+
+    @property
+    bool isUtf8Input() const
+    {
+        return (cast(uint32_t) vkey) < 0xd800 || (cast(uint32_t) vkey) > 0xdfff;
     }
 }
 
