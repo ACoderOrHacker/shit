@@ -560,7 +560,7 @@ class UnknownCharWidthException : Exception
 export uint32_t wswidth(S)(S str) if (isSomeString!S)
 {
     uint32_t sum = 0;
-    foreach (i, c; str)
+    foreach (i, dchar c; str)
     {
         int n = wcwidth(cast(uint32_t) c);
         if (n < 0)

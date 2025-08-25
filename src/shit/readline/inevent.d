@@ -100,7 +100,7 @@ export struct InputEvent
     @property
     bool isUtf8Input() const
     {
-        return (cast(uint32_t) vkey) < 0xd800 || (cast(uint32_t) vkey) > 0xdfff;
+        return (cast(uint32_t) vkey) >= 32 && ((cast(uint32_t) vkey) < 0xd800 ||(cast(uint32_t) vkey) > 0xdfff);
     }
 }
 
