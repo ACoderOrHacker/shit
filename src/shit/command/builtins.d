@@ -113,7 +113,7 @@ export ExecuteResult builtinConfig(ref GlobalConfig config, string[] args)
             return ExecuteResult(0);
         }
 
-        string path = buildPath(shitConfigsPath(), cfg ~ ".json");
+        string path = buildPath(ShitInformation.configPath(), cfg ~ ".json");
         JSONValue jVal = readJSON(path);
 
         jVal[key] = value;

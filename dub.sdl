@@ -5,7 +5,7 @@ copyright "Copyright © 2025, ACoderOrHacker"
 license "Apache-2.0"
 
 libs "lua"
-lflags "-Lcore"
+stringImportPaths "."
 targetPath "build/dist"
 targetType "executable"
 copyFiles "etc"

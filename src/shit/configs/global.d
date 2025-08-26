@@ -42,7 +42,7 @@ export GlobalConfig getGlobalConfig()
 
     try
     {
-        value = readJSON(buildPath(shitConfigsPath(), "global.json"));
+        value = readJSON(buildPath(ShitInformation.configPath(), "global.json"));
     }
     catch (Exception e)
     {

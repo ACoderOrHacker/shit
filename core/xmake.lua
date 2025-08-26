@@ -4,7 +4,6 @@ target("lualib")
     set_kind("static")
     set_basename("lua")
 
-    set_targetdir("$(projectdir)")
     add_files("lua/*.c|lua.c|luac.c|onelua.c")
     add_defines("LUA_COMPAT_5_2", "LUA_COMPAT_5_1")
     if is_plat("linux", "bsd", "cross") then

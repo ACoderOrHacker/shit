@@ -24,7 +24,7 @@ export class BadPkgmanConfigException : Exception
 @property
 export string packagesPath()
 {
-    return buildPath(shitConfigsPath(), "packages");
+    return buildPath(ShitInformation.configPath(), "packages");
 }
 
 export struct PkgmanConfig

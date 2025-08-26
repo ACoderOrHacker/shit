@@ -72,9 +72,10 @@ jobs:
           xrepo update-repo
           xrepo list-repo
 
-      - name: Build Lua
+      - name: Build & Install Lua
         run: |
           xmake build -y -v -P core
+          xmake install --admin
 
       - name: Build project
         run: |

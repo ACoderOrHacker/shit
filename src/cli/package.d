@@ -24,17 +24,14 @@ import pkgman.configs;
 
 export void outputInformation()
 {
-    // output information
-    writefln("SHIT shell v%s, a powerful and modern terminal", shitFullVersion);
-    writefln("On [%s, %s], on %s mode",
-        shitOs, shitArchitecture, shitMode);
+    writefln("SHIT shell v%s, a powerful and modern terminal", ShitInformation.fullVersion);
     writeln("Copyright (C) 2025, ACoderOrHacker");
     writeln();
 }
 
 export void setDefaultTitle()
 {
-    setConsoleTitle(format("SHIT shell v%s", shitFullVersion));
+    setConsoleTitle(format("SHIT shell v%s", ShitInformation.fullVersion));
 }
 
 export void cliExecute(ref GlobalConfig config, string command, bool showExitcode = true)
