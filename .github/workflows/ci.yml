@@ -64,22 +64,27 @@ jobs:
 
       - name: Set Arch
         run: |
-          xmake config -m release -y -v
-          xmake f -a ${{matrix.arch}} -y -v
+          xmake config -m release -y -v -P core
+          xmake f -a ${{matrix.arch}} -y -v -P core
 
       - name: Update Repo
         run: |
           xrepo update-repo
           xrepo list-repo
 
+      - name: Build Lua
+        run: |
+          xmake build -y -v -P core
+
       - name: Build project
         run: |
-          xmake build -y -v
+          dub build --build=release-debug
 
       - name: Package project
         run: |
-          xmake pack -y -o packages/ -f "nsis,targz,zip,runself" --autobuild=n -v
-    
+          mkdir packages
+        # TODO: add packer
+  
       - name: Upload Build Artifact
         uses: actions/upload-artifact@v4
         with:
