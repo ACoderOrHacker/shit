@@ -4,7 +4,9 @@
 ** See Copyright Notice in lua.h
 */
 
-import lua;
+module luaapi.lualib;
+
+import luaapi.lua;
 
 extern (C):
 

@@ -25,7 +25,7 @@ local/
 build/
 
 # Configure file
-src/shit/configs/project.d
+src/config.d
 
 # Vscode project files
 .vscode/

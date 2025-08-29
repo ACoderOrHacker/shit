@@ -5,10 +5,12 @@
 ** See Copyright Notice at the end of this file
 */
 
+module luaapi.lua;
+
 import core.stdc.limits;
 import core.stdc.stddef;
 import core.stdc.stdarg;
-import luaconf;
+import luaapi.luaconf;
 
 extern (C):
 

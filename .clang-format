@@ -6,4 +6,4 @@ AccessModifierOffset: -4
 BreakBeforeBraces: Attach
 Cpp11BracedListStyle: true
 PointerAlignment: Right
-SortIncludes: false
+Sort    import: false

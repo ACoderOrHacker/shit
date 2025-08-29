@@ -1,0 +1,3 @@
+module config;
+
+enum shitFullVersion = "${VERSION}";

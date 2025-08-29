@@ -12,6 +12,7 @@ import std.utf;
 import std.getopt;
 import std.range;
 import termcolor;
+import cli.logo;
 import helper;
 import helper.signal;
 import shit.configs;
@@ -267,6 +268,13 @@ export int cliDMain(string[] args)
         string defaultPackageType = "";
         bool loadingPackage = true;
 
+        void versionHandler(string option)
+        {
+            outputInformation();
+
+            outputLogo();
+        }
+
         void replHandler(string option)
         {
             exit(replMain(loadingPackage));
@@ -387,6 +395,7 @@ export int cliDMain(string[] args)
             "type|t", "the type to create default package", &defaultPackageType,
             "loading-packages", &loadingPackage,
 
+            "version", "get version", &versionHandler,
             "repl|r", "run repl shell", &replHandler,
             "execute|e", "execute a command", &executeHandler,
             "install|i", "install a package", &installHandler,

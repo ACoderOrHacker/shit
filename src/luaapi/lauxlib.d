@@ -4,11 +4,13 @@
 ** See Copyright Notice in lua.h
 */
 
+module luaapi.lauxlib;
+
 import core.stdc.config;
 import core.stdc.stddef;
 import core.stdc.stdio;
-import lua;
-import luaconf;
+import luaapi.lua;
+import luaapi.luaconf;
 
 extern (C):
 
