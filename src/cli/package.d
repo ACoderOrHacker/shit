@@ -273,6 +273,30 @@ export int cliDMain(string[] args)
             outputInformation();
 
             outputLogo();
+
+            static void linkline(string emoji, string title, string link)
+            {
+                stdout.write("\t" ~ emoji ~ " ");
+                stdout.setColor(Colors.bold)
+                    .write(title);
+                stdout.setColor(Colors.reset);
+
+                stdout.write(": ");
+                stdout.setColor(Colors.underline)
+                    .write(link);
+                stdout.setColor(Colors.reset);
+                writeln();
+            }
+
+            linkline("👉", "Documentations",
+                "https://ACoderOrHacker.github.io/shit");
+
+            linkline("💪", "Oh-my-shit",
+                "https://github.com/ACoderOrHacker/oh-my-shit");
+
+            writeln();
+            writeln();
+            
         }
 
         void replHandler(string option)
