@@ -107,6 +107,7 @@ int lon_prompts(lua_State* L)
     getGConfig(L).prompts = delegate() {
         lua_getglobal(L, toStringz("__on_prompts_callback"));
         lua_pcall(L, 0, 0, 0);
+        stdout.flush();
     };
 
     return 0;

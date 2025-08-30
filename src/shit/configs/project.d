@@ -11,6 +11,6 @@ export class ShitInformation
     @property
     static string configPath()
     {
-        return buildPath(dirName(executablePath()), "etc", "shit");
+        return buildPath(dirName(dirName(executablePath())), "etc", "shit");
     }
 }

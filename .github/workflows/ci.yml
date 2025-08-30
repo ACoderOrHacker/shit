@@ -78,7 +78,7 @@ jobs:
 
       - name: Package project
         run: |
-          xmake pack -o packages
+          xmake pack -o packages -y -v
   
       - name: Upload Build Artifact
         uses: actions/upload-artifact@v4
