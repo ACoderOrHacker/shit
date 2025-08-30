@@ -288,10 +288,10 @@ export int cliDMain(string[] args)
                 writeln();
             }
 
-            linkline("👉", "Documentations",
+            linkline("\U0001F449", "Documentations",
                 "https://ACoderOrHacker.github.io/shit");
 
-            linkline("💪", "Oh-my-shit",
+            linkline("\U0001F4AA", "Oh-my-shit",
                 "https://github.com/ACoderOrHacker/oh-my-shit");
 
             writeln();
@@ -457,7 +457,7 @@ export int cliDMain(string[] args)
     return 0;
 }
 
-extern (C) export int cliDMain(int argc, const(char) **argv)
+extern (C) export int cliCMain(int argc, const(char) **argv)
 {
     return cliDMain(convertToStringArray(argv, argc));
 }

@@ -1,3 +1,11 @@
+/++
+ The shit version define, auto genrated
+
+ + Authors: AcoderOrHacker
+ + License: Apache-2.0 License
+ + Copyright: Copyright (C) 2025, AcoderOrHacker
+ +/
+
 module config;
 
 enum shitFullVersion = "${VERSION}";
