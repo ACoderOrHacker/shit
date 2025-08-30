@@ -107,7 +107,6 @@ int lon_prompts(lua_State* L)
     getGConfig(L).prompts = delegate() {
         lua_getglobal(L, toStringz("__on_prompts_callback"));
         lua_pcall(L, 0, 0, 0);
-        stdout.flush();
     };
 
     return 0;
@@ -131,13 +130,15 @@ int lcprint(lua_State* L)
     string formatString = cast(string) fromStringz(lua_tostring(L, 1));
     Formatter.writef(formatString);
 
+    stdout.flush();
+
     return 0;
 }
 
 int lcprintln(lua_State* L)
 {
     int len = lcprint(L);
-    stdout.writeln();
+    stdout.writeln(); // stdout is flushed so we don't flush it
 
     return len;
 }
