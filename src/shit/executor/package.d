@@ -96,7 +96,7 @@ export ExecuteResult executeProcess(Command cmd,
         throw new ExecuteException(commandName(cmd) ~ ": command not found");
 
     if (cmd.commandList.length == 0)
-        return ExecuteResu
+        return ExecuteResult(0);
 
     string tmp = findProgram(cmd.commandList[0]);
     if (tmp !is null)
