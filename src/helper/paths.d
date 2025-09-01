@@ -1,4 +1,6 @@
 module helper.paths;
+@safe:
+export:
 
 import std.conv;
 import std.path : buildPath, dirName;
@@ -30,7 +32,7 @@ version (Posix)
         return expandTilde("~");
     }
 
-    string executablePath()
+    string executablePath() @trusted
     {
         char[1024] buffer;
         ssize_t len = readlink("/proc/self/exe", buffer.ptr, buffer.sizeof);
@@ -46,7 +48,7 @@ version (Windows)
     import core.sys.windows.windows;
     import core.stdc.wchar_ : wchar_t, wcslen;
 
-    string getHome()
+    string getHome() @trusted
     {
         wchar_t[260] path;
         if (SHGetFolderPathW(null, CSIDL_PROFILE, null, 0, path.ptr) == 0)
@@ -56,7 +58,7 @@ version (Windows)
         throw new HomeNotFoundException("Home directory not found");
     }
 
-    string executablePath()
+    string executablePath() @trusted
     {
         wchar_t[1024] buffer;
         auto len = GetModuleFileNameW(null, buffer.ptr, buffer.sizeof);

@@ -4,26 +4,12 @@ import std.json;
 import std.file;
 import std.path;
 import std.conv : to;
+import std.functional : toDelegate;
 import shit.configs.project;
 import helper.paths;
+import shit.configs.jsonconfigdef;
 public import shit.configs.basic;
 public import shit.configs.project;
-
-export class GlobalConfigNotFoundException : Exception
-{
-    this(string msg)
-    {
-        super(msg);
-    }
-}
-
-export class BadGlobalConfigException : Exception
-{
-    this(string msg)
-    {
-        super(msg);
-    }
-}
 
 alias WritePromptsFunc = void delegate();
 
@@ -32,61 +18,29 @@ export struct GlobalConfig
     string defaultPath;
     bool showExitCode;
 
-    WritePromptsFunc prompts;
+    private WritePromptsFunc prompts_;
+    
+    private static void defaultPrompts()
+    {
+        import std.stdio : stdout;
+        import std.file : getcwd;
+
+        stdout.write(getcwd(), " $ ");
+        stdout.flush();
+    }
+
+    void initialize() @trusted
+    {
+        defaultPath = getHome();
+        showExitCode = false;
+        prompts_ = toDelegate(&defaultPrompts);
+    }
+
+    @property
+    ref WritePromptsFunc prompts()
+    {
+        return prompts_;
+    }
 }
 
-export GlobalConfig getGlobalConfig()
-{
-    GlobalConfig config;
-    JSONValue value;
-
-    try
-    {
-        value = readJSON(buildPath(ShitInformation.configPath(), "global.json"));
-    }
-    catch (Exception e)
-    {
-        throw new GlobalConfigNotFoundException(
-            "Unable to read global configuration file: " ~ e.msg);
-    }
-
-    try
-    {
-        JSONValue jDefaultPath = value["defaultPath"];
-        if (jDefaultPath.type == JSONType.string)
-        {
-            config.defaultPath = jDefaultPath.str;
-            if (config.defaultPath == "~")
-                config.defaultPath = getHome();
-        }
-        else
-        {
-            throw new BadGlobalConfigException("defaultPath is not a string");
-        }
-    }
-    catch (JSONException e)
-    {
-        throw new GlobalConfigNotFoundException(
-            "Unable to read defaultPath from global configuration file");
-    }
-
-    try
-    {
-        JSONValue jShowExitCode = value["showExitCode"];
-        if (jShowExitCode.type == JSONType.string)
-        {
-            config.showExitCode = jShowExitCode.str == "true" ? true : false;
-        }
-        else
-        {
-            throw new BadGlobalConfigException("showExitCode is not a string");
-        }
-    }
-    catch (JSONException e)
-    {
-        throw new GlobalConfigNotFoundException(
-            "Unable to read showExitCode from global configuration file");
-    }
-
-    return config;
-}
+alias gconfig = Config!(GlobalConfig, "global.json", JSONReader, JSONWriter);

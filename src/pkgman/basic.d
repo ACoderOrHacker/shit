@@ -251,12 +251,10 @@ export synchronized class Package
 interface ExtensionRunner
 {
     void run(string /* package name */ ,
-        string /* package path */ ,
-        ref GlobalConfig) shared;
+        string /* package path */) shared;
 
     void destroy(string /* package name */ ,
-        string /* package path */ ,
-        ref GlobalConfig) shared;
+        string /* package path */) shared;
 }
 
 /// Runner API

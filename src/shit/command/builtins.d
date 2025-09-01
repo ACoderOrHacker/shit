@@ -13,7 +13,7 @@ import helper.exit;
 import helper.paths;
 import helper.logger;
 
-export ExecuteResult builtinCd(ref GlobalConfig config, string[] args)
+export ExecuteResult builtinCd(string[] args)
 {
     try
     {
@@ -35,7 +35,7 @@ export ExecuteResult builtinCd(ref GlobalConfig config, string[] args)
     }
 }
 
-export ExecuteResult builtinExit(ref GlobalConfig config, string[] args)
+export ExecuteResult builtinExit(string[] args)
 {
     try
     {
@@ -56,7 +56,7 @@ export ExecuteResult builtinExit(ref GlobalConfig config, string[] args)
     return ExecuteResult(0);
 }
 
-export ExecuteResult builtinEcho(ref GlobalConfig config, string[] args)
+export ExecuteResult builtinEcho(string[] args)
 {
     foreach (str; args[1 .. $])
         write(str);
@@ -65,33 +65,22 @@ export ExecuteResult builtinEcho(ref GlobalConfig config, string[] args)
     return ExecuteResult(0);
 }
 
-export ExecuteResult builtinReload(ref GlobalConfig config, string[] args)
+export ExecuteResult builtinReload(string[] args)
 {
     if (args.length != 1)
         return ExecuteResult(1);
 
-    string home = getHome();
-    try
+    gconfig.read();
+    if (gconfig.exception !is null)
     {
-        config = getGlobalConfig();
-    }
-    catch (BadGlobalConfigException e)
-    {
-        log("startup error(bad global configures): " ~ e.msg);
-        config.showExitCode = false;
-        config.defaultPath = home;
-    }
-    catch (GlobalConfigNotFoundException e)
-    {
-        log("global configures not found: " ~ e.msg);
-        config.showExitCode = false;
-        config.defaultPath = home;
+        log("error when loading global configuration: " ~ gconfig.exception.msg);
+        return ExecuteResult(1);
     }
 
     return ExecuteResult(0);
 }
 
-export ExecuteResult builtinConfig(ref GlobalConfig config, string[] args)
+export ExecuteResult builtinConfig(string[] args)
 {
     string key, value, cfg;
     try
@@ -99,8 +88,6 @@ export ExecuteResult builtinConfig(ref GlobalConfig config, string[] args)
         auto help = getopt(
             args,
             std.getopt.config.bundling,
-            std.getopt.config.required,
-            "config|c", "The configure name (such as `global`)", &cfg,
             std.getopt.config.required,
             "key|k", "The key of the configures", &key,
             std.getopt.config.required,
@@ -113,11 +100,12 @@ export ExecuteResult builtinConfig(ref GlobalConfig config, string[] args)
             return ExecuteResult(0);
         }
 
-        string path = buildPath(ShitInformation.configPath(), cfg ~ ".json");
-        JSONValue jVal = readJSON(path);
+        auto file = buildPath(ShitInformation.configPath, cfg ~ ".json");
+        auto jValue = readJSON(file);
 
-        jVal[key] = value;
-        writeJSON(path, jVal, true);
+        jValue[key] = value;
+        writeJSON(file, jValue);
+        
         return ExecuteResult(0);
     }
     catch (GetOptException e)

@@ -35,7 +35,7 @@ export void setDefaultTitle()
     setConsoleTitle(format("SHIT shell v%s", ShitInformation.fullVersion));
 }
 
-export void cliExecute(ref GlobalConfig config, string command, bool showExitcode = true)
+export void cliExecute(string command, bool showExitcode = true)
 {
     Command cmd = Command("");
     try
@@ -50,8 +50,8 @@ export void cliExecute(ref GlobalConfig config, string command, bool showExitcod
 
     try
     {
-        auto result = executeCommand(config, cmd);
-        if (config.showExitCode && showExitcode)
+        auto result = executeCommand(cmd);
+        if (gconfig.showExitCode && showExitcode)
             log("exit code " ~ result.getExitCode().to!string);
     }
     catch (ExecuteException e)
@@ -64,12 +64,12 @@ export void cliExecute(ref GlobalConfig config, string command, bool showExitcod
     }
 }
 
-export void executeCmdLine(GlobalConfig config)
+export void executeCmdLine()
 {
     scope (exit)
         setDefaultTitle();
 
-    config.prompts();
+    gconfig.prompts()();
 
     // Read command from stdin
     string command = new DefaultReadline().read().toUTF8;
@@ -80,14 +80,13 @@ export void executeCmdLine(GlobalConfig config)
         return; // nothing to do
 
     setConsoleTitle(command);
-    cliExecute(config, command);
+    cliExecute(command);
 }
 
 export int replMain(bool loadingPackage)
 {
 
     outputInformation();
-    GlobalConfig globalConfig = initWithGlobalConfig();
     setDefaultTitle();
 
     // Run runners
@@ -114,7 +113,7 @@ export int replMain(bool loadingPackage)
                 break;
             }
 
-            runners[pkgtype].run(pkg, path, globalConfig);
+            runners[pkgtype].run(pkg, path);
         }
     }
 
@@ -138,7 +137,7 @@ export int replMain(bool loadingPackage)
                 break;
             }
 
-            runners[pkgtype].destroy(pkg, path, globalConfig);
+            runners[pkgtype].destroy(pkg, path);
         }
     }
 
@@ -173,7 +172,7 @@ export int replMain(bool loadingPackage)
     {
         while (true)
         {
-            executeCmdLine(globalConfig);
+            executeCmdLine();
             writeln();
         }
     }
@@ -189,51 +188,16 @@ export int replMain(bool loadingPackage)
     return 0;
 }
 
-export GlobalConfig initWithGlobalConfig()
+export void initWithGlobalConfig()
 {
-    GlobalConfig globalConfig;
-
-    bool isDefault = false;
     try
     {
-        globalConfig = getGlobalConfig();
-        startUp(globalConfig);
-    }
-    catch (BadGlobalConfigException e)
-    {
-        log("startup error(bad global configures): " ~ e.msg);
-        isDefault = true;
-    }
-    catch (GlobalConfigNotFoundException e)
-    {
-        log("warning: global configures not found: " ~ e.msg);
-        isDefault = true;
+        startUp(gconfig);
     }
     catch (StartUpException e)
     {
         log("startup error(bad configures): " ~ e.msg);
-        isDefault = true;
     }
-
-    if (isDefault)
-    {
-        globalConfig.showExitCode = false;
-        globalConfig.defaultPath = getHome();
-        try
-        {
-            startUp(globalConfig);
-        }
-        catch (StartUpException e)
-        {
-            // that is the default configuration,
-            // if it fails, then maybe the getHome or anyelse gets bad works
-            internalError(e.msg);
-            exit(1);
-        }
-    }
-    globalConfig.prompts = delegate() { stdout.write(getcwd(), " $ "); stdout.flush(); };
-
-    return globalConfig;
 }
 
 export PkgmanConfig getPkgmanConfig()
@@ -257,6 +221,13 @@ export PkgmanConfig getPkgmanConfig()
 export int cliDMain(string[] args)
 {
     initSignals();
+
+    if (gconfig.exception !is null)
+    {
+        log("error when loading global configuration: " ~ gconfig.exception.msg);
+        writeln();
+    }
+    initWithGlobalConfig();
 
     try
     {
@@ -306,8 +277,7 @@ export int cliDMain(string[] args)
 
         void executeHandler(string option, string command)
         {
-            GlobalConfig config = initWithGlobalConfig();
-            cliExecute(config, command, false);
+            cliExecute(command, false);
         }
 
         void installHandler(string option, string file)

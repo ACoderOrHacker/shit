@@ -14,24 +14,6 @@ import shit.configs.global;
 extern (C):
 export:
 
-private ref GlobalConfig getGConfig(lua_State* L)
-{
-    lua_getglobal(L, "gconfig");
-
-    void* ptr;
-    if (!lua_islightuserdata(L, -1))
-    {
-        luaL_error(L, toStringz("gconfig is not a light user data (bad gconfig)"));
-    }
-
-    ptr = lua_touserdata(L, -1);
-    lua_pop(L, 1);
-
-    ref GlobalConfig config = *(cast(GlobalConfig*) ptr);
-
-    return config;
-}
-
 private string[] popStringArray(lua_State* L)
 {
     if (!lua_istable(L, -1))
@@ -76,7 +58,7 @@ int lset_prompts(lua_State* L)
     if (prompts is null)
         return 0;
 
-    getGConfig(L).prompts = delegate() {
+    gconfig.prompts = delegate() {
         foreach (prompt; prompts)
         {
             import std.stdio;
@@ -104,7 +86,7 @@ int lon_prompts(lua_State* L)
     lua_pushvalue(L, 1);
     lua_setglobal(L, toStringz("__on_prompts_callback"));
 
-    getGConfig(L).prompts = delegate() {
+    gconfig.prompts = delegate() {
         lua_getglobal(L, toStringz("__on_prompts_callback"));
         lua_pcall(L, 0, 0, 0);
     };
@@ -246,17 +228,13 @@ int lset_format_variable(lua_State* L)
     return 0;
 }
 
-void luaopen_luashit(lua_State* L, ref GlobalConfig config)
+void luaopen_luashit(lua_State* L)
 {
     void add(string name, lua_CFunction func)
     {
         lua_pushcfunction(L, func);
         lua_setglobal(L, toStringz(name));
     }
-
-    // global config init (for api to read)
-    lua_pushlightuserdata(L, &config);
-    lua_setglobal(L, toStringz("gconfig"));
 
     luaL_checkversion(L);
     add("set_prompts", &lset_prompts);

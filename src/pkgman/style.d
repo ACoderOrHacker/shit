@@ -76,7 +76,7 @@ synchronized class StylePackage : Package
 
 class StyleExtensionRunner : ExtensionRunner
 {
-    private void runOneStyleFile(string name, string file, ref GlobalConfig config) shared
+    private void runOneStyleFile(string name, string file) shared
     {
         extensions[name] = luaL_newstate();
         if (!exists(file))
@@ -84,7 +84,7 @@ class StyleExtensionRunner : ExtensionRunner
 
         lua_State* extension = extensions[name];
         luaL_openlibs(extension);
-        luaopen_luashit(extension, config);
+        luaopen_luashit(extension);
 
         if (luaL_dofile(extension, toStringz(file)) != LUA_OK)
         {
@@ -93,12 +93,12 @@ class StyleExtensionRunner : ExtensionRunner
         }
     }
 
-    override void run(string packageName, string packagePath, ref GlobalConfig config) shared
+    override void run(string packageName, string packagePath) shared
     {
-        runOneStyleFile(packageName, buildPath(packagePath, "styles", "main.lua"), config);
+        runOneStyleFile(packageName, buildPath(packagePath, "styles", "main.lua"));
     }
 
-    override void destroy(string packageName, string packagePath, ref GlobalConfig config) shared
+    override void destroy(string packageName, string packagePath) shared
     {
         if (packageName !in extensions)
             return;

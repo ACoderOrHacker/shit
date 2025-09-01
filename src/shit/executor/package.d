@@ -7,8 +7,8 @@ import shit.command;
 import shit.command.finder;
 import shit.configs.global;
 
-alias executeCommandType = ExecuteResult delegate(ref GlobalConfig, string[]);
-alias executeCommandFunctionType = ExecuteResult function(ref GlobalConfig, string[]);
+alias executeCommandType = ExecuteResult delegate(string[]);
+alias executeCommandFunctionType = ExecuteResult function(string[]);
 alias builtinCommandsType = executeCommandType[string];
 
 shared builtinCommandsType builtinCommands;
@@ -40,7 +40,7 @@ export class Registry
     assert(&getBuiltinCommands() == &builtinCommands);
     auto r = new Registry;
 
-    ExecuteResult t(ref GlobalConfig, string[])
+    ExecuteResult t(string[])
     {
         return ExecuteResult(0);
     }
@@ -95,6 +95,9 @@ export ExecuteResult executeProcess(Command cmd,
     scope (failure)
         throw new ExecuteException(commandName(cmd) ~ ": command not found");
 
+    if (cmd.commandList.length == 0)
+        return ExecuteResu
+
     string tmp = findProgram(cmd.commandList[0]);
     if (tmp !is null)
         cmd.commandList[0] = tmp;
@@ -104,17 +107,17 @@ export ExecuteResult executeProcess(Command cmd,
     return result;
 }
 
-export ExecuteResult executeNonSystem(Command cmd, ref GlobalConfig config)
+export ExecuteResult executeNonSystem(Command cmd)
 {
     auto builtins = getBuiltinCommands();
     string prog = commandName(cmd);
     if (prog !in builtins)
         throw new RegisteredCommandNotFoundException("command `" ~ prog ~ "` not found");
 
-    return getBuiltinCommands()[prog](config, cmd.commandList);
+    return getBuiltinCommands()[prog](cmd.commandList);
 }
 
-export ExecuteResult executeCommand(ref GlobalConfig config, Command command)
+export ExecuteResult executeCommand(Command command)
 {
     if (command.type == CommandType.System)
     {
@@ -122,14 +125,14 @@ export ExecuteResult executeCommand(ref GlobalConfig config, Command command)
     }
     else if (command.type == CommandType.NonSystem)
     {
-        return executeNonSystem(command, config);
+        return executeNonSystem(command);
     }
     else
     {
         // Auto type
         if (commandName(command) in getBuiltinCommands())
         {
-            return executeNonSystem(command, config);
+            return executeNonSystem(command);
         }
         else
         {

@@ -1,4 +1,5 @@
 module shit.configs.basic;
+@safe:
 
 public import std.json;
 import std.file : read, rename;
@@ -12,10 +13,9 @@ export class SafeWriteException : Exception
     }
 }
 
-export JSONValue readJSON(string path)
+export JSONValue readJSON(string path) @trusted
 {
-    auto content = cast(string) read(path);
-    return parseJSON(content);
+    return parseJSON(cast(string) read(path));
 }
 
 export void writeJSON(string path, JSONValue value, bool safeWrite = false)

@@ -8,6 +8,7 @@
 
 module cli.logo;
 @safe:
+export:
 
 import termcolor.gradient;
 
