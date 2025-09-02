@@ -127,6 +127,12 @@ class Config(C, string F, R, W)
         return exception_;
     }
 
+    @property
+    static bool hasException()
+    {
+        return exception_ !is null;
+    }
+
     static string getConfigFile()
     {
         return buildPath(ShitInformation.configPath, F);

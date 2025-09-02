@@ -71,7 +71,7 @@ export ExecuteResult builtinReload(string[] args)
         return ExecuteResult(1);
 
     gconfig.read();
-    if (gconfig.exception !is null)
+    if (gconfig.hasException)
     {
         log("error when loading global configuration: " ~ gconfig.exception.msg);
         return ExecuteResult(1);

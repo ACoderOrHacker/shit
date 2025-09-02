@@ -222,7 +222,7 @@ export int cliDMain(string[] args)
 {
     initSignals();
 
-    if (gconfig.exception !is null)
+    if (gconfig.hasException)
     {
         log("error when loading global configuration: " ~ gconfig.exception.msg);
         writeln();
