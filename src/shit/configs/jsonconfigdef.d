@@ -2,7 +2,7 @@ module shit.configs.jsonconfigdef;
 @safe:
 export:
 
-import std.ascii;
+static import ascii = std.ascii;
 import shit.configs.basic;
 public import shit.configs.configdef;
 
@@ -11,10 +11,10 @@ private string toConfigItemName_(string Name)()
     string result;
     foreach (i, dchar ch; Name)
     {
-        if (isUpper(ch))
+        if (ascii.isUpper(ch))
         {
             if (i > 0) result ~= '-';
-            result ~= toLower(ch);
+            result ~= ascii.toLower(ch);
         }
         else
         {
@@ -70,3 +70,5 @@ class JSONWriter
         writeJSON(file_, root_);
     }
 }
+
+alias JSONConfig(C, string F) = Config!(C, F, JSONReader, JSONWriter);

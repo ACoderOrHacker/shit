@@ -69,7 +69,7 @@ export void executeCmdLine()
     scope (exit)
         setDefaultTitle();
 
-    gconfig.prompts()();
+    gconfig.prompts();
 
     // Read command from stdin
     string command = new DefaultReadline().read().toUTF8;
@@ -283,6 +283,24 @@ export int cliDMain(string[] args)
         void installHandler(string option, string file)
         {
             outputInformation();
+
+            if (isUrlPath(file))
+            {
+                // a url path
+                // download from web
+
+                try
+                {
+                    string path = buildPath(tmpDir(), "shit_temppack.pkg");
+                    downloadFile(file, path);
+
+                    file = path;
+                }
+                catch (DownloadException e)
+                {
+                    log("warning: failed to download file from url `" ~ file ~ "`: " ~ e.msg);
+                }
+            }
 
             shared(Package) pkg = new shared Package(file);
             try

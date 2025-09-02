@@ -18,7 +18,8 @@ export struct GlobalConfig
     string defaultPath;
     bool showExitCode;
 
-    private WritePromptsFunc prompts_;
+    @IgnoreItem
+    WritePromptsFunc prompts;
     
     private static void defaultPrompts()
     {
@@ -33,14 +34,8 @@ export struct GlobalConfig
     {
         defaultPath = getHome();
         showExitCode = false;
-        prompts_ = toDelegate(&defaultPrompts);
-    }
-
-    @property
-    ref WritePromptsFunc prompts()
-    {
-        return prompts_;
+        prompts = toDelegate(&defaultPrompts);
     }
 }
 
-alias gconfig = Config!(GlobalConfig, "global.json", JSONReader, JSONWriter);
+alias gconfig = JSONConfig!(GlobalConfig, "global.json");

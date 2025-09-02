@@ -7,17 +7,36 @@ import std.traits;
 import std.meta;
 import shit.configs.project;
 
+// UDA Defines
+
+enum IgnoreItem;
+struct ConfigItemName
+{
+    string name;
+}
+
+// Codes
+
 void readConfig(C, Reader)(in string file, ref C data)
         if (is(C == struct) && is(Reader == class))
 {
     Reader reader = new Reader(file);
     foreach (i, memberName; FieldNameTuple!C)
     {
-        static if (__traits(getVisibility, mixin("C." ~ memberName)) == "public")
+        static if (__traits(getVisibility, mixin("C." ~ memberName)) == "public"
+            && !hasUDA!(mixin("data." ~ memberName), IgnoreItem))
         {
             alias memberType = typeof(__traits(getMember, data, memberName));
 
-            enum configItemName = Reader.toConfigItemName!memberName();
+            static if (hasUDA!(mixin("data." ~ memberName), ConfigItemName))
+            {
+                enum configItemName =
+                    getUDAs!(mixin("data." ~ memberName), ConfigItemName)[0].name;
+            }
+            else
+            {
+                enum configItemName = Reader.toConfigItemName!memberName();
+            }
 
             __traits(getMember, data, memberName) = reader.readValue!memberType(configItemName);
         }
@@ -27,13 +46,22 @@ void readConfig(C, Reader)(in string file, ref C data)
 void writeConfig(C, Writer)(in string file, in C data)
 {
     Writer writer = new Writer(file);
-    foreach(i, memberName; FieldNameTuple!C)
+    foreach (i, memberName; FieldNameTuple!C)
     {
-        static if (__traits(getVisibility, mixin("C." ~ memberName)) == "public")
+        static if (__traits(getVisibility, mixin("C." ~ memberName)) == "public"
+            && !hasUDA!(mixin("data." ~ memberName), IgnoreItem))
         {
             alias memberType = typeof(__traits(getMember, data, memberName));
 
-            enum configItemName = Writer.toConfigItemName!memberName();
+            static if (hasUDA!(mixin("data." ~ memberName), ConfigItemName))
+            {
+                enum configItemName =
+                    getUDAs!(mixin("data." ~ memberName), ConfigItemName)[0].name;
+            }
+            else
+            {
+                enum configItemName = Writer.toConfigItemName!memberName();
+            }
 
             writer.writeValue!memberType(configItemName, __traits(getMember, data, memberName));
         }
@@ -48,7 +76,7 @@ class Config(C, string F, R, W)
     private static Exception exception_ = null;
 
     alias data this;
-    
+
     static string configFile;
 
     static this()

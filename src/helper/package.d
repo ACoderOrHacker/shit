@@ -9,3 +9,4 @@ public import helper.git;
 public import helper.user;
 public import helper.utf;
 public import helper.str;
+public import helper.download;

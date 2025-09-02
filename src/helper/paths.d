@@ -3,6 +3,9 @@ module helper.paths;
 export:
 
 import std.conv;
+import std.process : environment;
+import std.algorithm;
+import std.string;
 import std.path : buildPath, dirName;
 
 class ExecutableNotFoundException : Exception
@@ -14,6 +17,14 @@ class ExecutableNotFoundException : Exception
 }
 
 class HomeNotFoundException : Exception
+{
+    this(string msg)
+    {
+        super(msg);
+    }
+}
+
+class TmpDirNotFoundException : Exception
 {
     this(string msg)
     {
@@ -39,6 +50,11 @@ version (Posix)
         if (len == -1)
             throw new ExecutableNotFoundException("Executable not found");
         return buffer[0 .. len].to!string;
+    }
+
+    string tmpDir()
+    {
+        return environment.get("TMPDIR", "/tmp");
     }
 }
 
@@ -66,4 +82,25 @@ version (Windows)
             throw new ExecutableNotFoundException("Executable not found");
         return buffer[0 .. len].to!string;
     }
+
+    string tmpDir()
+    {
+        string tempDir;
+        tempDir = environment.get("TMP", 
+            environment.get("TEMP"));
+        if (tempDir.length == 0) {
+            throw new TmpDirNotFoundException("Not found");
+        }
+
+        return tempDir;
+    }
+}
+
+bool isUrlPath(string path) {
+    string[] urlProtocols = [
+        "http://", "https://", "ftp://", "file://", 
+        "ws://", "wss://", "mailto:", "tel:"
+    ];
+    
+    return urlProtocols.any!(protocol => path.startsWith(protocol));
 }
