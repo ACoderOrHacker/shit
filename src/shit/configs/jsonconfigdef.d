@@ -2,28 +2,8 @@ module shit.configs.jsonconfigdef;
 @safe:
 export:
 
-static import ascii = std.ascii;
 import shit.configs.basic;
 public import shit.configs.configdef;
-
-private string toConfigItemName_(string Name)()
-{
-    string result;
-    foreach (i, dchar ch; Name)
-    {
-        if (ascii.isUpper(ch))
-        {
-            if (i > 0) result ~= '-';
-            result ~= ascii.toLower(ch);
-        }
-        else
-        {
-            result ~= ch;
-        }
-    }
-
-    return result;
-}
 
 class JSONReader
 {
@@ -41,7 +21,7 @@ class JSONReader
 
     static string toConfigItemName(string Name)()
     {
-        return toConfigItemName_!Name();
+        return Name;
     }
 }
 
@@ -62,7 +42,7 @@ class JSONWriter
 
     static string toConfigItemName(string Name)()
     {
-        return toConfigItemName_!Name();
+        return Name;
     }
 
     void writeToFile() const

@@ -77,11 +77,12 @@ class Config(C, string F, R, W)
 
     alias data this;
 
-    static string configFile;
+    // singleton disable functions
+    @disable this();
+    @disable void opAssign(Config!(C, F, R, W)) {}
 
     static this()
     {
-        configFile = getConfigFile();
         read(); // read the configuration
     }
 
@@ -93,12 +94,12 @@ class Config(C, string F, R, W)
         }
     }
 
-    static void read()
+    static void read(string baseDir = ShitInformation.configPath)
     {
         try
         {
             doInitiailize();
-            readConfig!(C, R)(configFile, data);
+            readConfig!(C, R)(getConfigFile(baseDir), data);
             exception_ = null;
         }
         catch (Exception e)
@@ -108,11 +109,11 @@ class Config(C, string F, R, W)
         }
     }
 
-    static void write()
+    static void write(string baseDir = ShitInformation.configPath)
     {
         try
         {
-            writeConfig!(C, W)(configFile, data);
+            writeConfig!(C, W)(getConfigFile(baseDir), data);
             exception_ = null;
         }
         catch (Exception e)
@@ -133,8 +134,8 @@ class Config(C, string F, R, W)
         return exception_ !is null;
     }
 
-    static string getConfigFile()
+    static string getConfigFile(string baseDir)
     {
-        return buildPath(ShitInformation.configPath, F);
+        return buildPath(baseDir, F);
     }
 }

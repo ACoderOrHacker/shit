@@ -13,6 +13,8 @@ import std.getopt;
 import std.range;
 import termcolor;
 import cli.logo;
+import cli.localconf;
+import cli.config;
 import helper;
 import helper.signal;
 import shit.configs;
@@ -83,7 +85,7 @@ export void executeCmdLine()
     cliExecute(command);
 }
 
-export int replMain(bool loadingPackage)
+export int replMain(bool loadingPackage, YNResult cliOptiin)
 {
 
     outputInformation();
@@ -170,8 +172,16 @@ export int replMain(bool loadingPackage)
 
     try
     {
+        string lastCwd;
         while (true)
         {
+            if (lastCwd != getcwd())
+            {
+                checkLocalConfig(cliOptiin);
+            }
+
+            lastCwd = getcwd();
+
             executeCmdLine();
             writeln();
         }
@@ -186,18 +196,6 @@ export int replMain(bool loadingPackage)
     if (loadingPackage)
         destroyAll();
     return 0;
-}
-
-export void initWithGlobalConfig()
-{
-    try
-    {
-        startUp(gconfig);
-    }
-    catch (StartUpException e)
-    {
-        log("startup error(bad configures): " ~ e.msg);
-    }
 }
 
 export PkgmanConfig getPkgmanConfig()
@@ -222,22 +220,28 @@ export int cliDMain(string[] args)
 {
     initSignals();
 
-    if (gconfig.hasException)
-    {
-        log("error when loading global configuration: " ~ gconfig.exception.msg);
-        writeln();
-    }
-    initWithGlobalConfig();
+    checkAndInit();
 
     try
     {
-        if (args.length == 1)
-        {
-            return replMain(true);
-        }
-
         string defaultPackageType = "";
         bool loadingPackage = true;
+        YNResult yesOrNo = YNResult.Invalid;
+
+        if (args.length == 1)
+        {
+            return replMain(loadingPackage, yesOrNo);
+        }
+
+        void yesHandler(string option)
+        {
+            yesOrNo = YNResult.Yes;
+        }
+
+        void noHandler(string option)
+        {
+            yesOrNo = YNResult.No;
+        }
 
         void versionHandler(string option)
         {
@@ -272,7 +276,7 @@ export int cliDMain(string[] args)
 
         void replHandler(string option)
         {
-            exit(replMain(loadingPackage));
+            exit(replMain(loadingPackage, yesOrNo));
         }
 
         void executeHandler(string option, string command)
@@ -406,6 +410,8 @@ export int cliDMain(string[] args)
 
             "type|t", "the type to create default package", &defaultPackageType,
             "loading-packages", &loadingPackage,
+            "yes|y", "set yes to questions", &yesHandler,
+            "no|n", "set no to questions", &noHandler,
 
             "version", "get version", &versionHandler,
             "repl|r", "run repl shell", &replHandler,

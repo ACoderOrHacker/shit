@@ -1,4 +1,4 @@
 {
-    "showExitCode": "true",
+    "showExitCode": true,
     "defaultPath": "~"
 }

@@ -1,7 +1,10 @@
 module shit.initializer;
 
+import std.string;
 import std.file : chdir, FileException;
-import shit.configs.global : GlobalConfig;
+import std.path : buildPath;
+import shit.configs.global;
+import helper.paths;
 
 export class StartUpException : Exception
 {
@@ -11,11 +14,13 @@ export class StartUpException : Exception
     }
 }
 
-export void startUp(ref GlobalConfig config)
+export void startUp()
 {
     try
     {
-        chdir(config.defaultPath);
+        string path = gconfig.defaultPath.startsWith("~")
+         ? buildPath(getHome(), gconfig.defaultPath[1 .. $]) : gconfig.defaultPath;
+        chdir(path);
     }
     catch (FileException e)
     {

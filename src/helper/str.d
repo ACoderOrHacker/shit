@@ -1,6 +1,7 @@
 module helper.str;
 
 import std.stdint;
+import std.ascii;
 import core.stdc.string : strlen;
 
 dstring insert(dstring original, uint32_t pos, dchar ch)
@@ -20,4 +21,28 @@ string[] convertToStringArray(const(char)** cStrings, size_t length)
     }
 
     return result;
+}
+
+enum YNResult
+{
+    Yes,
+    No,
+    Invalid
+}
+
+YNResult checkYesOrNo(char ch)
+{
+    if (ch == '\n')
+        return YNResult.No;
+
+    if (!isAlpha(ch))
+        return YNResult.Invalid;
+    char lowerChar = toLower(ch);
+
+    if (lowerChar == 'y')
+        return YNResult.Yes;
+    else if (lowerChar == 'n')
+        return YNResult.No;
+    else
+        return YNResult.Invalid;
 }
