@@ -5,6 +5,17 @@ export:
 import shit.configs.basic;
 public import shit.configs.configdef;
 
+private template isJSONArray(T)
+{
+    enum isJSONArray
+        = isArray!T && !isSomeString!T;
+}
+
+private template elementType(T) if (isArray!T)
+{
+    alias elementType = typeof(T.init[0]);
+}
+
 class JSONReader
 {
     private JSONValue root_;
@@ -15,6 +26,24 @@ class JSONReader
     }
 
     T readValue(T)(string name)
+        if (isJSONArray!T)
+    {
+        alias elementOfJSONValue = elementType!T;
+
+        JSONValue[] values = root_[name].get!(JSONValue[]);
+
+        T array;
+        array.length = values.length;
+        foreach (i, value; values)
+        {
+            array[i] = value.get!elementOfJSONValue;
+        }
+
+        return array;
+    }
+
+    T readValue(T)(string name)
+        if (!isJSONArray!T)
     {
         return root_[name].get!T;
     }
@@ -36,6 +65,22 @@ class JSONWriter
     }
 
     void writeValue(T)(string name, T value) @trusted
+        if (isJSONArray!T)
+    {
+        alias elementOfJSONValue = elementType!T;
+
+        JSONValue[] values;
+        values.length = value.length;
+
+        foreach (i, val; value)
+        {
+            values[i] = val;
+        }
+        root_.object[name] = values;
+    }
+
+    void writeValue(T)(string name, T value) @trusted
+        if (!isJSONArray!T)
     {
         root_.object[name] = value;
     }

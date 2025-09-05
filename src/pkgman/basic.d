@@ -242,7 +242,7 @@ export synchronized class Package
     @property
     string extensionPath()
     {
-        return buildPath(packagesPath, baseName(file_, extension(file_)));
+        return buildPath(buildPath(pkgconfig.baseDir, "packages"), baseName(file_, extension(file_)));
     }
 
     private string file_;

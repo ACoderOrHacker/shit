@@ -74,6 +74,7 @@ class Config(C, string F, R, W)
 {
     static C data;
     private static Exception exception_ = null;
+    private static string baseDir_ = null;
 
     alias data this;
 
@@ -94,26 +95,28 @@ class Config(C, string F, R, W)
         }
     }
 
-    static void read(string baseDir = ShitInformation.configPath)
+    static void read(in string baseDir = ShitInformation.configPath)
     {
         try
         {
             doInitiailize();
             readConfig!(C, R)(getConfigFile(baseDir), data);
+            baseDir_ = baseDir;
             exception_ = null;
         }
         catch (Exception e)
         {
             exception_ = e;
+            baseDir_ = null;
             doInitiailize();
         }
     }
 
-    static void write(string baseDir = ShitInformation.configPath)
+    static void write()
     {
         try
         {
-            writeConfig!(C, W)(getConfigFile(baseDir), data);
+            writeConfig!(C, W)(getConfigFile(baseDir_), data);
             exception_ = null;
         }
         catch (Exception e)
@@ -126,6 +129,12 @@ class Config(C, string F, R, W)
     static ref Exception exception()
     {
         return exception_;
+    }
+
+    @property
+    static string baseDir()
+    {
+        return baseDir_;
     }
 
     @property

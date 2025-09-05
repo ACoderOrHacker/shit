@@ -7,6 +7,7 @@ import std.path;
 import helper.logger;
 import helper.str;
 import shit.configs.global;
+import pkgman.configs;
 import cli.config;
 
 void checkLocalConfig(YNResult cliOpt) @trusted
@@ -29,8 +30,9 @@ void checkLocalConfig(YNResult cliOpt) @trusted
     {
     case YNResult.Yes:
         gconfig.read(localPath);
+        pkgconfig.read(localPath);
         checkAndInit();
-        if (!gconfig.hasException)
+        if (!gconfig.hasException && !pkgconfig.hasException)
             log("successfully read configurations");
         break;
     case YNResult.No:

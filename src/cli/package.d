@@ -54,7 +54,10 @@ export void cliExecute(string command, bool showExitcode = true)
     {
         auto result = executeCommand(cmd);
         if (gconfig.showExitCode && showExitcode)
+        {
+            writeln();
             log("exit code " ~ result.getExitCode().to!string);
+        }
     }
     catch (ExecuteException e)
     {
@@ -92,12 +95,11 @@ export int replMain(bool loadingPackage, YNResult cliOptiin)
     setDefaultTitle();
 
     // Run runners
-    PkgmanConfig pkgconfig = getPkgmanConfig();
     shared(Runners) runners;
 
     void runAll()
     {
-        foreach (i, pkg; pkgconfig.enablePackages)
+        foreach (i, pkg; pkgconfig.enabledPackages)
         {
             string path = buildPath(packagesPath, pkg);
             string pkgtypePath = buildPath(path, ".pkgtype");
@@ -121,7 +123,7 @@ export int replMain(bool loadingPackage, YNResult cliOptiin)
 
     void destroyAll()
     {
-        foreach (i, pkg; pkgconfig.enablePackages)
+        foreach (i, pkg; pkgconfig.enabledPackages)
         {
             string path = buildPath(packagesPath, pkg);
             string pkgtypePath = buildPath(path, ".pkgtype");
@@ -156,14 +158,6 @@ export int replMain(bool loadingPackage, YNResult cliOptiin)
             log("error when running extensions...");
             log("  details: " ~ e.msg);
         }
-        catch (BadPkgmanConfigException e)
-        {
-            log("bad package configure: " ~ e.msg);
-        }
-        catch (PkgmanConfigNotFoundException e)
-        {
-            log("pkgman configure not found: " ~ e.msg);
-        }
         catch (FileException e)
         {
             log("bad read for .pkgtype: " ~ e.msg);
@@ -196,24 +190,6 @@ export int replMain(bool loadingPackage, YNResult cliOptiin)
     if (loadingPackage)
         destroyAll();
     return 0;
-}
-
-export PkgmanConfig getPkgmanConfig()
-{
-    PkgmanConfig config;
-    try
-    {
-        config = readPkgmanConfig();
-    }
-    catch (BadPkgmanConfigException e)
-    {
-        log("bad package configure: " ~ e.msg);
-    }
-    catch (PkgmanConfigNotFoundException e)
-    {
-        log("pkgman configure not found: " ~ e.msg);
-    }
-    return config;
 }
 
 export int cliDMain(string[] args)
@@ -340,35 +316,27 @@ export int cliDMain(string[] args)
 
         void disableHandler(string option, string pkgname)
         {
-            PkgmanConfig config = getPkgmanConfig();
-
-            if (config.enablePackages.length == 0 || config.enablePackages.find(pkgname).empty)
+            if (pkgconfig.enabledPackages.length == 0 || pkgconfig.enabledPackages.find(pkgname).empty)
             {
                 log("warning: `" ~ pkgname ~ "` is not in `enabled-packages`");
             }
 
-            auto writedEnabledPackages = config.enablePackages.filter!(s => s != pkgname).array;
-            PkgmanConfig writedConfig;
-            writedConfig.enablePackages = writedEnabledPackages;
-
-            writePkgmanConfig(writedConfig);
+            pkgconfig.enabledPackages = pkgconfig.enabledPackages.filter!(s => s != pkgname).array;
+            pkgconfig.write();
 
             log("package `" ~ pkgname ~ "` has disabled successfully");
         }
 
         void enableHandler(string option, string pkgname)
         {
-            PkgmanConfig config = getPkgmanConfig();
-
-            if (!config.enablePackages.find(pkgname).empty)
+            if (!pkgconfig.enabledPackages.find(pkgname).empty)
             {
                 log("`" ~ pkgname ~ "` is already in `enabled-packages`");
                 exit(1);
             }
 
-            config.enablePackages ~= pkgname;
-
-            writePkgmanConfig(config);
+            pkgconfig.enabledPackages ~= pkgname;
+            pkgconfig.write();
 
             log("package `" ~ pkgname ~ "` has enabled successfully");
         }
