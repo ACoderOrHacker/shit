@@ -101,7 +101,7 @@ public:
             Command cmd = Command(super.result.toUTF8);
             color = isValidCommand(cmd) ? "\x1b[32m" : "\x1b[31m";
         }
-        catch (ParseError)
+        catch (ParseException)
         {
             color = "\x1b[37m";
         }

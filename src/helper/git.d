@@ -1,4 +1,12 @@
+/++
+ + A git helper for shit
+ + Authors: ACoderOrHacker
+ + License: Apache-2.0 License
+ + Copyright: Copyright (C) 2025, ACoderOrHacker
+ +/
 module helper.git;
+@safe:
+export:
 
 import std.process;
 import std.path;
@@ -9,14 +17,21 @@ import std.algorithm;
 import std.format;
 import std.stdio;
 
-class GitRepoNotFoundException : Exception
+/++ 
+ * Thrown by GitData
+ + See_Also: GitData
+ +/
+class GitException : Exception
 {
-    this(string path)
+    this(string msg, string file = __FILE__, size_t line = __LINE__, Throwable nextInChain = null) pure nothrow @nogc @safe
     {
-        super("Git repo not found at " ~ path);
+        super(msg, file, line, nextInChain);
     }
 }
 
+/++ 
+ + Git data reader
+ +/
 class GitData
 {
     private string path_;
@@ -27,16 +42,20 @@ class GitData
     {
         string pathTemp = gitPathGet(path, recursion);
         if (pathTemp is null)
-            throw new GitRepoNotFoundException(path);
+            throw new GitException("git repository not found: " ~ path);
 
         this.gitPath_ = gitPath;
         this.path_ = pathTemp;
         this.gitRepoPath_ = buildPath(pathTemp, ".git");
 
         if (!exists(this.gitRepoPath_))
-            throw new GitRepoNotFoundException(this.gitRepoPath_);
+            throw new GitException("git repository not found: " ~ this.gitRepoPath_);
     }
 
+    /++ 
+     + Get the .git directory's parent directory
+     + Returns: The directory
+     +/
     @property
     string path()
     {
@@ -44,25 +63,37 @@ class GitData
         return this.path_;
     }
 
+    /++ 
+     + Get the git executable path
+     + Returns: The git executable path
+     +/
     @property
     string gitPath()
     {
         return this.gitPath_ == null ? "git" : this.gitPath_;
     }
 
+    /++ 
+     + Get the .git directory
+     + Returns: The .git directory
+     +/
     @property
     string gitRepo()
     {
         return this.gitRepoPath_;
     }
 
+    /++ 
+     + Get the current branch of this git repo
+     + Returns: The current branch name
+     +/
     @property
     string currentBranch()
     {
         string headFile = buildPath(this.gitRepo, "HEAD");
         if (exists(headFile))
         {
-            string headContent = (cast(string) read(headFile))[0 .. $ - 1];
+            string headContent = (readText(headFile))[0 .. $ - 1];
             if (headContent.startsWith("ref: "))
             {
                 string[] parts = headContent.split("/");
@@ -75,7 +106,7 @@ class GitData
         }
         else
         {
-            throw new GitRepoNotFoundException("Not a git repository: " ~ this.gitRepo);
+            throw new GitException("Not a git repository: " ~ this.gitRepo);
         }
     }
 

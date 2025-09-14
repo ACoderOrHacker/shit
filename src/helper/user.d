@@ -1,9 +1,21 @@
+/++
+ + User & Host helper for shit
+ + Authors: ACoderOrHacker
+ + License: Apache-2.0 License
+ + Copyright: Copyright (C) 2025, ACoderOrHacker
+ +/
 module helper.user;
+@safe:
+export:
 
 import std.stdio;
 import std.string;
 import std.process : environment;
 
+/++ 
+ + Get the current user name
+ + Returns: The user name
+ +/
 string getUserName() @trusted
 {
     version (Windows)
@@ -17,6 +29,10 @@ string getUserName() @trusted
     return user;
 }
 
+/++ 
+ + Get the current host name
+ + Returns: The host name
+ +/
 string getHostName() @trusted
 {
     version (Windows)
@@ -30,6 +46,10 @@ string getHostName() @trusted
     return host;
 }
 
+/++ 
+ + Checks if the current user is an administrator
+ + Returns: If yes, then it's an administrator, or false
+ +/
 bool isAdmin()
 {
     version (Windows)

@@ -1,42 +1,37 @@
+/++
+ + Basic configuraion helpers
+ + Authors: ACoderOrHacker
+ + License: Apache-2.0 License
+ + Copyright: Copyright (C) 2025, ACoderOrHacker
+ +/
 module shit.configs.basic;
 @safe:
+export:
 
 public import std.json;
-import std.file : read, rename;
+import std.file : readText;
 import std.stdio : File;
 
-export class SafeWriteException : Exception
+/++ 
+ + Read json into a JSONValue
+ + Params:
+ +   path = The json file path
+ + Returns: The root json object
+ +/
+JSONValue readJSON(string path)
 {
-    this(string msg)
-    {
-        super(msg);
-    }
+    return parseJSON(readText(path));
 }
 
-export JSONValue readJSON(string path) @trusted
+/++ 
+ + Write json object to a file
+ + Params:
+ +   path = The file path to write json
+ +   value = The JSON value
+ +/
+void writeJSON(string path, JSONValue value)
 {
-    return parseJSON(cast(string) read(path));
-}
-
-export void writeJSON(string path, JSONValue value, bool safeWrite = false)
-{
-    File f;
-    if (safeWrite)
-        f = File(path ~ ".tmp", "w"); // add tmp file
-    else
-        f = File(path, "w");
+    File f = File(path, "w");
     f.write(value.toPrettyString);
     f.close();
-
-    if (safeWrite)
-    {
-        try
-        {
-            rename(path ~ ".tmp", path); // rename tmp file
-        }
-        catch (Exception e)
-        {
-            throw new SafeWriteException("failed to write json file: " ~ e.msg);
-        }
-    }
 }

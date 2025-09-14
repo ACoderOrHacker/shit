@@ -8,64 +8,36 @@ import std.algorithm;
 import std.string;
 import std.path : buildPath, dirName;
 
-class ExecutableNotFoundException : Exception
-{
-    this(string msg)
-    {
-        super(msg);
-    }
-}
-
+/++ 
+ * Thrown by getHome
+ +/
 class HomeNotFoundException : Exception
 {
-    this(string msg)
+    this(string msg, string file = __FILE__, size_t line = __LINE__, Throwable nextInChain = null) pure nothrow @nogc @safe
     {
-        super(msg);
+        super(msg, file, line, nextInChain);
     }
 }
 
-class TmpDirNotFoundException : Exception
+/++ 
+ + Get the home path
+ + Returns: The home path
+ +/
+string getHome() @trusted
 {
-    this(string msg)
+    version (Posix)
     {
-        super(msg);
+        import std.process : environment;
+
+        // POSIX standard defines this environment variable
+        return environment.get("HOME", "/home");
     }
-}
-
-version (Posix)
-{
-    import std.path;
-    import core.sys.posix.unistd;
-
-    nothrow
-    string getHome()
+    version (Windows)
     {
-        return expandTilde("~");
-    }
+        import core.sys.windows.shlobj;
+        import core.sys.windows;
+        import core.stdc.wchar_;
 
-    string executablePath() @trusted
-    {
-        char[1024] buffer;
-        ssize_t len = readlink("/proc/self/exe", buffer.ptr, buffer.sizeof);
-        if (len == -1)
-            throw new ExecutableNotFoundException("Executable not found");
-        return buffer[0 .. len].to!string;
-    }
-
-    string tmpDir()
-    {
-        return environment.get("TMPDIR", "/tmp");
-    }
-}
-
-version (Windows)
-{
-    import core.sys.windows.shlobj : SHGetFolderPathW, CSIDL_PROFILE;
-    import core.sys.windows.windows;
-    import core.stdc.wchar_ : wchar_t, wcslen;
-
-    string getHome() @trusted
-    {
         wchar_t[260] path;
         if (SHGetFolderPathW(null, CSIDL_PROFILE, null, 0, path.ptr) == 0)
         {
@@ -73,34 +45,20 @@ version (Windows)
         }
         throw new HomeNotFoundException("Home directory not found");
     }
-
-    string executablePath() @trusted
-    {
-        wchar_t[1024] buffer;
-        auto len = GetModuleFileNameW(null, buffer.ptr, buffer.sizeof);
-        if (len == 0)
-            throw new ExecutableNotFoundException("Executable not found");
-        return buffer[0 .. len].to!string;
-    }
-
-    string tmpDir()
-    {
-        string tempDir;
-        tempDir = environment.get("TMP", 
-            environment.get("TEMP"));
-        if (tempDir.length == 0) {
-            throw new TmpDirNotFoundException("Not found");
-        }
-
-        return tempDir;
-    }
 }
 
-bool isUrlPath(string path) {
+/++ 
+ + Checks if the path is a web url path
+ + Params:
+ +   path = The url path
+ + Returns: If it's a web url path, returns true, or returns false
+ +/
+bool isUrlPath(string path)
+{
     string[] urlProtocols = [
-        "http://", "https://", "ftp://", "file://", 
+        "http://", "https://", "ftp://", "file://",
         "ws://", "wss://", "mailto:", "tel:"
     ];
-    
+
     return urlProtocols.any!(protocol => path.startsWith(protocol));
 }

@@ -1,6 +1,14 @@
+/++
+ + D-style string utilities
+ + Authors: ACoderOrHacker
+ + License: Apache-2.0 License
+ + Copyright: Copyright (C) 2025, ACoderOrHacker
+ +/
 module helper.string;
+@safe:
+export:
 
-export string replaceFirst(string input, string oldHeader, string newHeader)
+string replaceFirst(string input, string oldHeader, string newHeader)
 {
     import std.string : startsWith;
 

@@ -1,27 +1,63 @@
+/++
+ + The formatter of shit, add format variable for formatting
+ + Authors: ACoderOrHacker
+ + License: Apache-2.0 License
+ + Copyright: Copyright (C) 2025, ACoderOrHacker
+ +/
 module helper.formatter;
+@safe:
+export:
 
-import std.stdio : stdout;
+static import stdio = std.stdio;
 import std.regex;
 import std.string;
 import std.array;
 import std.algorithm.iteration;
+static import format_ = std.format;
+import std.traits;
 import termcolor;
 
+/++
+ + The format value getter function prototype
+ +/
 alias FormatValueFunc = string delegate(string[]) @trusted;
 
-enum FormatSliceType : ubyte
+/++ 
+ + The format slice type
+ + *Text* means the slice is a normal text (not format variable)
+ + *Variable* means the slice is a format variable
+
+ + See_Also: FormatSlice
+ +/
+private enum FormatSliceType : ubyte
 {
     Text,
     Variable
 }
 
-export struct FormatSlice
+/++ 
+ * The format slice prototype
+ + Includes *type* and *str*
+ + *type* is the type of the slice
+ + *str* is the details of the slice
+ + If type is *Variable*, then just includes the variable name
+
+ + See_Also: FormatSliceType
+ +/
+private struct FormatSlice
 {
     FormatSliceType type;
     string str;
 }
 
-export FormatSlice[] parseFormatString(string input)
+/++ 
+ + Parse a input string to slices
+ + Params:
+ +   input = the input full string
+ + Returns: Slices of the input
+ + See_Also: FormatSlice
+ +/
+private nothrow FormatSlice[] parseFormatString(in string input)
 {
     FormatSlice[] result;
     size_t i = 0;
@@ -88,19 +124,48 @@ export FormatSlice[] parseFormatString(string input)
     return result;
 }
 
-export synchronized class Formatter
+/++ 
+ * The root formatter, based on std.stdio
+ + Example:
+ + ---
+ + import helper.formatter;
+ + void main()
+ + {
+ +     Formatter.writef("%s ${home}", "Hello");
+ + }
+ + ---
+ +/
+synchronized class Formatter
 {
 
     private static FormatValueFunc[string] values_;
 
+    /++ 
+     + The getter for format values getter
+     + Returns: The array of format values
+     + See_Also: FormatValueFunc
+     +/
     @property
     static ref FormatValueFunc[string] formatValues()
     {
         return values_;
     }
 
-    static string format(string formatString)
+    private static auto formatBase(Char, A...)(in Char[] fmt, A args)
     {
+        return format_.format(fmt, args);
+    }
+
+    /++ 
+     + Format into a string
+     + Params:
+     +   fmt = The format.string
+     +   args = Items to format
+     + Returns: The processed string
+     +/
+    static Char[] format(Char, A...)(in Char[] fmt, A args)
+    {
+        auto formatString = formatBase(fmt, args);
         FormatSlice[] slices = parseFormatString(formatString);
         string result;
         foreach (slice; slices)
@@ -119,8 +184,15 @@ export synchronized class Formatter
         return result;
     }
 
-    static void writef(string formatString)
+    /++ 
+     + Write to console by the format string
+     + Params:
+     +   fmt = The format string
+     +   args = Items to write
+     +/
+    static void writef(Char, A...)(in Char[] fmt, A args)
     {
+        auto formatString = formatBase(fmt, args);
         FormatSlice[] slices = parseFormatString(formatString);
         foreach (slice; slices)
         {
@@ -128,12 +200,57 @@ export synchronized class Formatter
             {
                 string[] variableAndParams = slice.str.split(';');
                 if (variableAndParams[0] in formatValues)
-                    stdout.write(formatValues[variableAndParams[0]](variableAndParams.length == 1 ? [
+                    stdio.write(formatValues[variableAndParams[0]](variableAndParams.length == 1 ? [
                             ] : variableAndParams[1 .. $]));
                 continue;
             }
-            stdout.write(slice.str);
+            stdio.write(slice.str);
         }
+    }
+
+    /++ 
+     + Format into a string
+     + Params:
+     +   args = Items to format
+     +/
+    static auto format(alias fmt, A...)(A args)
+        if (isSomeString!(typeof(fmt)))
+    {
+        return format(fmt, args);
+    }
+
+    /++ 
+     + Write to console by the format string
+     + Params:
+     +   args = Items to write
+     +/
+    static void writef(alias fmt, A...)(A args)
+        if (isSomeString!(typeof(fmt)))
+    {
+        writef(fmt, args);
+    }
+
+    /++ 
+     + Write to console by the format string and put a \n
+     + Params:
+     +   fmt = The format string
+     +   args = Items to write
+     +/
+    static void writefln(Char, A...)(in Char[] fmt, A args)
+    {
+        writef(fmt, args);
+        stdio.writeln();
+    }
+
+    /++ 
+     + Write to console by the format string and put a \n
+     + Params:
+     +   args = Items to write
+     +/
+    static void writefln(alias fmt, A...)(A args)
+        if (isSomeString!(typeof(fmt)))
+    {
+        writefln(fmt, args);
     }
 }
 
@@ -168,7 +285,7 @@ private string gitBranch(string[]) @trusted
     {
         gitBranch = new GitData("git", getcwd(), true).currentBranch;
     }
-    catch (GitRepoNotFoundException)
+    catch (GitException)
     {
         gitBranch = null;
     }
@@ -193,7 +310,7 @@ static this()
     foreach (s; __traits(allMembers, Colors))
     {
         Formatter.formatValues[s] = (string[]) @trusted {
-            stdout.setColor(mixin("Colors." ~ s));
+            stdio.stdout.setColor(mixin("Colors." ~ s));
             return "";
         };
     }
@@ -207,7 +324,7 @@ static this()
 
         try
         {
-            stdout.setColor(T(
+            stdio.stdout.setColor(T(
                     args[0].to!uint8_t,
                     args[1].to!uint8_t,
                     args[2].to!uint8_t

@@ -1,4 +1,12 @@
+/++
+ + The global configuration based on JSONConfig
+ + Authors: ACoderOrHacker
+ + License: Apache-2.0 License
+ + Copyright: Copyright (C) 2025, ACoderOrHacker
+ +/
 module shit.configs.global;
+@safe:
+export:
 
 import std.json;
 import std.file;
@@ -13,7 +21,10 @@ public import shit.configs.project;
 
 alias WritePromptsFunc = void delegate();
 
-export struct GlobalConfig
+/++ 
+ + The global configuration definatiob
+ +/
+struct GlobalConfig
 {
     string defaultPath;
     bool showExitCode;
@@ -21,7 +32,7 @@ export struct GlobalConfig
     @IgnoreItem
     WritePromptsFunc prompts;
     
-    private static void defaultPrompts()
+    private static void defaultPrompts() @trusted
     {
         import std.stdio : stdout;
         import std.file : getcwd;

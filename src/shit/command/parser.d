@@ -1,11 +1,19 @@
+/++
+ + Parse the command by input string
+ + Authors: ACoderOrHacker
+ + License: Apache-2.0 License
+ + Copyright: Copyright (C) 2025, ACoderOrHacker
+ +/
 module shit.command.parser;
+@safe:
+export:
 
 import std.stdio;
 import std.string;
 import std.exception;
 import std.array;
 
-enum State
+private enum State
 {
     Delimiter,
     Unquoted,
@@ -17,17 +25,25 @@ enum State
     Comment,
 }
 
-export class ParseError : Exception
+/++ 
+ + Thrown by splitCommand when parsing a bad command
+ +/
+class ParseException : Exception
 {
-    @safe
-    this(string msg = "Parse error")
+    this(string msg = "Parse error", string file = __FILE__, size_t line = __LINE__, Throwable nextInChain = null) pure nothrow @nogc @safe
     {
-        super(msg);
+        super(msg, file, line, nextInChain);
     }
 }
 
-@safe
-export string[] splitCommand(string s)
+/++ 
+ + Parse a string into a string array
+ + Params:
+ +   s = The input string
+ + Returns: The slices of the string
+ + Throws: ParseException
+ +/
+string[] splitCommand(string s)
 {
     State state = State.Delimiter;
     string[] words;
@@ -124,7 +140,7 @@ export string[] splitCommand(string s)
 
         case State.SingleQuoted:
             if (isEnd)
-                throw new ParseError();
+                throw new ParseException();
             else if (c == '\'')
                 state = State.Unquoted;
             else
@@ -136,7 +152,7 @@ export string[] splitCommand(string s)
 
         case State.DoubleQuoted:
             if (isEnd)
-                throw new ParseError();
+                throw new ParseException();
             else if (c == '"')
                 state = State.Unquoted;
             else if (c == '\\')
@@ -150,7 +166,7 @@ export string[] splitCommand(string s)
 
         case State.DoubleQuotedBackslash:
             if (isEnd)
-                throw new ParseError();
+                throw new ParseException();
             else if (c == '\n')
                 state = State.DoubleQuoted;
             else if (c == '$' || c == '`' || c == '"' || c == '\\')
@@ -213,6 +229,6 @@ done:
         ["git", "commit", "-m", `Fix: Parse "quoted\\ strings" correctly`]);
 
     auto cmd = `echo "unclosed quote`;
-    assertThrown!ParseError(splitCommand(cmd),
+    assertThrown!ParseException(splitCommand(cmd),
         "Unclosed quote should throw ParseError");
 }

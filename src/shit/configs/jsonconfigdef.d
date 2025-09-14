@@ -16,6 +16,9 @@ private template elementType(T) if (isArray!T)
     alias elementType = typeof(T.init[0]);
 }
 
+/++ 
+ + The json reader implementation for Config
+ +/
 class JSONReader
 {
     private JSONValue root_;
@@ -54,6 +57,9 @@ class JSONReader
     }
 }
 
+/++ 
+ + The json writer implementation for Config
+ +/
 class JSONWriter
 {
     private JSONValue root_ = JSONValue.emptyObject;

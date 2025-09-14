@@ -1,4 +1,6 @@
 module shit.command.builtins;
+@safe:
+export:
 
 import std.file : chdir, read, FileException;
 import std.path;
@@ -13,7 +15,13 @@ import helper.exit;
 import helper.paths;
 import helper.logger;
 
-export ExecuteResult builtinCd(string[] args)
+/++ 
+ + Built-in cd defination
+ + Params:
+ +   args = The command arguments
+ + Returns: The exit code
+ +/
+ExecuteResult builtinCd(string[] args)
 {
     try
     {
@@ -35,7 +43,13 @@ export ExecuteResult builtinCd(string[] args)
     }
 }
 
-export ExecuteResult builtinExit(string[] args)
+/++ 
+ + Built-in exit defination
+ + Params:
+ +   args = The command arguments
+ + Returns: The exit code
+ +/
+ExecuteResult builtinExit(string[] args)
 {
     try
     {
@@ -56,7 +70,13 @@ export ExecuteResult builtinExit(string[] args)
     return ExecuteResult(0);
 }
 
-export ExecuteResult builtinEcho(string[] args)
+/++ 
+ + Built-in echo defination
+ + Params:
+ +   args = The command arguments
+ + Returns: The exit code
+ +/
+ExecuteResult builtinEcho(string[] args)
 {
     foreach (str; args[1 .. $])
         write(str);
@@ -65,7 +85,13 @@ export ExecuteResult builtinEcho(string[] args)
     return ExecuteResult(0);
 }
 
-export ExecuteResult builtinReload(string[] args)
+/++ 
+ + Built-in reload defination
+ + Params:
+ +   args = The command arguments
+ + Returns: The exit code
+ +/
+ExecuteResult builtinReload(string[] args)
 {
     if (args.length != 1)
         return ExecuteResult(1);
@@ -80,7 +106,13 @@ export ExecuteResult builtinReload(string[] args)
     return ExecuteResult(0);
 }
 
-export ExecuteResult builtinConfig(string[] args)
+/++ 
+ + Built-in config defination
+ + Params:
+ +   args = The command argumnets
+ + Returns: The exit code
+ +/
+ExecuteResult builtinConfig(string[] args) @trusted
 {
     string key, value, cfg;
     try
@@ -122,15 +154,11 @@ export ExecuteResult builtinConfig(string[] args)
     {
         log("no configure found: " ~ cfg);
     }
-    catch (SafeWriteException e)
-    {
-        log("failed to write configure: " ~ e.msg);
-    }
 
     return ExecuteResult(1);
 }
 
-static this()
+static this() @trusted
 {
     new Registry()
         .register("cd", &builtinCd)

@@ -1,4 +1,12 @@
+/++
+ + Find a program in current OS
+ + Authors: ACoderOrHacker
+ + License: Apache-2.0 License
+ + Copyright: Copyright (C) 2025, ACoderOrHacker
+ +/
 module shit.command.finder;
+@safe:
+export:
 
 import std.file;
 import std.path;
@@ -20,7 +28,7 @@ else
     static assert(false, "Unsupported platform");
 }
 
-private bool isExecutable(string path)
+private bool isExecutable(string path) @trusted
 {
     if (!exists(path) || !isFile(path))
         return false;
@@ -71,7 +79,18 @@ version (Windows) private string findFromAppPath(string programName)
     return cast(string) fromStringz(buffer);
 }
 
-export string findProgram(string programName)
+/++ 
+ + Find the program by name
+ + In all systems, this function finds from PATH environment variable
+ + In Windows, it finds extra programs from registry AppPath
+ + If the name is not just a name (/usr/bin/ls, dir/myExecutable)
+ + This function checks if it's a executable program,
+ + If yes, then just return it, or return null
+ + Params:
+ +   programName = The program name
+ + Returns: The program path, returns null if not found
+ +/
+string findProgram(string programName)
 {
     // absolute path
     if (programName.canFind('\\') || programName.canFind('/'))

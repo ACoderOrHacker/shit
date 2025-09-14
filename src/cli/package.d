@@ -1,4 +1,13 @@
+/++
+ + Shit cli root
+ + Defines cliDMain for D and cliCMain for C
+
+ + Authors: ACoderOrHacker
+ + License: Apache-2.0 License
+ + Copyright: Copyright (C) 2025, ACoderOrHacker
+ +/
 module cli;
+export:
 
 import std.file : exists, read, getcwd, FileException;
 import std.path : buildPath;
@@ -16,7 +25,6 @@ import cli.logo;
 import cli.localconf;
 import cli.config;
 import helper;
-import helper.signal;
 import shit.configs;
 import shit.initializer;
 import shit.executor;
@@ -25,26 +33,26 @@ import shit.readline;
 import pkgman.basic;
 import pkgman.configs;
 
-export void outputInformation()
+void outputInformation()
 {
     writefln("SHIT shell v%s, a powerful and modern terminal", ShitInformation.fullVersion);
     writeln("Copyright (C) 2025, ACoderOrHacker");
     writeln();
 }
 
-export void setDefaultTitle()
+void setDefaultTitle()
 {
     setConsoleTitle(format("SHIT shell v%s", ShitInformation.fullVersion));
 }
 
-export void cliExecute(string command, bool showExitcode = true)
+void cliExecute(string command, bool showExitcode = true)
 {
     Command cmd = Command("");
     try
     {
         cmd = Command(command);
     }
-    catch (ParseError)
+    catch (ParseException)
     {
         log(format("%s: parse error", command));
         return;
@@ -65,11 +73,11 @@ export void cliExecute(string command, bool showExitcode = true)
     }
     catch (RegisteredCommandNotFoundException e)
     {
-        log(format("%s: registered command not found", commandName(cmd)));
+        log(format("%s: registered command not found", cmd.name));
     }
 }
 
-export void executeCmdLine()
+void executeCmdLine()
 {
     scope (exit)
         setDefaultTitle();
@@ -88,7 +96,7 @@ export void executeCmdLine()
     cliExecute(command);
 }
 
-export int replMain(bool loadingPackage, YNResult cliOptiin)
+int replMain(bool loadingPackage, YNResult cliOption)
 {
 
     outputInformation();
@@ -171,7 +179,7 @@ export int replMain(bool loadingPackage, YNResult cliOptiin)
         {
             if (lastCwd != getcwd())
             {
-                checkLocalConfig(cliOptiin);
+                checkLocalConfig(cliOption);
             }
 
             lastCwd = getcwd();
@@ -192,10 +200,8 @@ export int replMain(bool loadingPackage, YNResult cliOptiin)
     return 0;
 }
 
-export int cliDMain(string[] args)
+int cliDMain(string[] args)
 {
-    initSignals();
-
     checkAndInit();
 
     try
@@ -203,11 +209,6 @@ export int cliDMain(string[] args)
         string defaultPackageType = "";
         bool loadingPackage = true;
         YNResult yesOrNo = YNResult.Invalid;
-
-        if (args.length == 1)
-        {
-            return replMain(loadingPackage, yesOrNo);
-        }
 
         void yesHandler(string option)
         {
@@ -248,6 +249,7 @@ export int cliDMain(string[] args)
             writeln();
             writeln();
             
+            exit(0);
         }
 
         void replHandler(string option)
@@ -258,6 +260,8 @@ export int cliDMain(string[] args)
         void executeHandler(string option, string command)
         {
             cliExecute(command, false);
+
+            exit(0);
         }
 
         void installHandler(string option, string file)
@@ -271,7 +275,7 @@ export int cliDMain(string[] args)
 
                 try
                 {
-                    string path = buildPath(tmpDir(), "shit_temppack.pkg");
+                    string path = buildPath(tempDir, "shit_temppack.pkg");
                     downloadFile(file, path);
 
                     file = path;
@@ -294,6 +298,8 @@ export int cliDMain(string[] args)
                 log("error when installing package `" ~ file ~ "`: " ~ e.msg);
                 exit(1);
             }
+
+            exit(0);
         }
 
         void uninstallHandler(string option, string file)
@@ -312,6 +318,8 @@ export int cliDMain(string[] args)
                 log("error when uninstalling package `" ~ file ~ "`: " ~ e.msg);
                 exit(1);
             }
+
+            exit(0);
         }
 
         void disableHandler(string option, string pkgname)
@@ -325,6 +333,8 @@ export int cliDMain(string[] args)
             pkgconfig.write();
 
             log("package `" ~ pkgname ~ "` has disabled successfully");
+
+            exit(0);
         }
 
         void enableHandler(string option, string pkgname)
@@ -339,6 +349,8 @@ export int cliDMain(string[] args)
             pkgconfig.write();
 
             log("package `" ~ pkgname ~ "` has enabled successfully");
+
+            exit(0);
         }
 
         void createPackageHandler(string option, string optfile)
@@ -370,6 +382,8 @@ export int cliDMain(string[] args)
             pkg.writeDefaultPackage();
 
             log("package `" ~ optfile ~ "` has created successfully");
+
+            exit(0);
         }
 
         auto helpInformation = getopt(
@@ -396,10 +410,12 @@ export int cliDMain(string[] args)
             defaultGetoptPrinter("The SHIT terminal", helpInformation.options);
             return 0;
         }
+
+        return replMain(loadingPackage, yesOrNo);
     }
     catch (ExitSignal e)
     {
-        return e.getCode();
+        return e;
     }
     catch (GetOptException e)
     {
@@ -419,7 +435,7 @@ export int cliDMain(string[] args)
     return 0;
 }
 
-extern (C) export int cliCMain(int argc, const(char) **argv)
+extern (C) int cliCMain(int argc, const(char) **argv)
 {
     return cliDMain(convertToStringArray(argv, argc));
 }

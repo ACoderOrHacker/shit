@@ -1,5 +1,5 @@
 /++
- [cli.logo] is a helper for outputing logo on terminal
+ + A helper for outputing logo on terminal
 
  + Authors: ACoderOrHacker
  + License: Apache-2.0 License

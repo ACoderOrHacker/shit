@@ -1,4 +1,7 @@
 module luashit;
+@trusted:
+export:
+extern (C):
 
 /// The shit terminal API for Lua interface
 
@@ -10,9 +13,6 @@ import std.array;
 import luaapi;
 import helper.formatter;
 import shit.configs.global;
-
-extern (C):
-export:
 
 private string[] popStringArray(lua_State* L)
 {
@@ -86,7 +86,7 @@ int lon_prompts(lua_State* L)
     lua_pushvalue(L, 1);
     lua_setglobal(L, toStringz("__on_prompts_callback"));
 
-    gconfig.prompts = delegate() {
+    gconfig.prompts = delegate() @trusted {
         lua_getglobal(L, toStringz("__on_prompts_callback"));
         lua_pcall(L, 0, 0, 0);
     };

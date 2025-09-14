@@ -1,4 +1,6 @@
 module shit.initializer;
+@safe:
+export:
 
 import std.string;
 import std.file : chdir, FileException;
@@ -6,7 +8,7 @@ import std.path : buildPath;
 import shit.configs.global;
 import helper.paths;
 
-export class StartUpException : Exception
+class StartUpException : Exception
 {
     this(string msg)
     {
@@ -14,7 +16,7 @@ export class StartUpException : Exception
     }
 }
 
-export void startUp()
+void startUp()
 {
     try
     {
@@ -25,5 +27,9 @@ export void startUp()
     catch (FileException e)
     {
         throw new StartUpException("Failed to change default path to: " ~ e.msg);
+    }
+    catch (Exception e)
+    {
+        throw new StartUpException(e.msg);
     }
 }

@@ -1,18 +1,39 @@
-module helper.signal;
+/++
+ + Defines signals and initializer for shit
+ + Authors: ACoderOrHacker
+ + License: Apache-2.0 License
+ + Copyright: Copyright (C) 2025, ACoderOrHacker
+ +/
 
-import core.stdc.signal;
+module helper.signal;
+@safe:
+export:
+
 import core.stdc.stdio;
-import core.stdc.stdlib : exit;
+import core.stdc.signal;
+import core.stdc.stdlib;
+
+private enum segfaultMessage = r"
+shit: segmentation fault
+  please report on https://github.com/ACoderOrHacker/shit/issues
+";
 
 extern (C) @nogc
-nothrow void segfaultHandle(int)
+private nothrow void segfaultHandle(int) @trusted
 {
-    printf("shit: segmentation fault" ~
-            "\n  please report on https://github.com/ACoderOrHacker/shit/issues");
+    printf(segfaultMessage);
     exit(1);
 }
 
-void initSignals()
+/++ 
+ + Initialize signals
+ +/
+void initSignals() @trusted
 {
     signal(SIGSEGV, &segfaultHandle);
+}
+
+static this()
+{
+    initSignals();
 }

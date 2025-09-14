@@ -1,5 +1,13 @@
+/++
+ + Local configurations loading utilities for cli
+
+ + Authors: ACoderOrHacker
+ + License: Apache-2.0 License
+ + Copyright: Copyright (C) 2025, ACoderOrHacker
+ +/
 module cli.localconf;
 @safe:
+export:
 
 import std.stdio;
 import std.file;
@@ -10,7 +18,7 @@ import shit.configs.global;
 import pkgman.configs;
 import cli.config;
 
-void checkLocalConfig(YNResult cliOpt) @trusted
+void checkLocalConfig(in YNResult cliOpt) @trusted
 {
     string localPath = buildPath(getcwd(), ".shit");
     YNResult yesOrNo = cliOpt;

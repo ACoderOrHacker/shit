@@ -28,8 +28,8 @@ end
 
 add_installfiles("etc/shit/(**.json)", {prefixdir = "etc/shit"})
 
-add_requires("lua 5.4.7", {alias = "lua54", configs = {shared = true}})
-add_requires("libcurl", {configs = {shared = true}})
+add_requires("lua 5.4.7", {alias = "lua54", configs = {shared = false}})
+add_requires("libcurl", {configs = {shared = false}})
 
 set_configdir("$(projectdir)/src/")
 add_configfiles("src/config.d.in")

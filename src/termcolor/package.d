@@ -1,4 +1,6 @@
 module termcolor;
+@safe:
+export:
 
 import std.stdint : uint8_t;
 import std.stdio : File;
@@ -151,6 +153,16 @@ version (Windows)
         if (code == 0)
         {
             return FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE;
+        }
+
+        if (code == 4)
+        {
+            return COMMON_LVB_UNDERSCORE;
+        }
+
+        if (code == 7)
+        {
+            return COMMON_LVB_REVERSE_VIDEO;
         }
 
         if (code >= 30 && code <= 37)

@@ -1,12 +1,27 @@
+/++
+ + The shit.command package
+ + Defines Command structure to storage information of a command
+ + Authors: ACoderOrHacker
+ + License: Apache-2.0 License
+ + Copyright: Copyright (C) 2025, ACoderOrHacker
+ +/
 module shit.command;
+@safe:
+export:
 
 import std.array;
 import std.conv : to;
 public import shit.command.parser;
 
+/++ 
+ + The specialize begin of commands
+ +/
 enum SystemCommandStartsWith = '%',
     NonSystemCommandStartsWith = '@';
 
+/++ 
+ + Commands type
+ +/
 enum CommandType
 {
     System,
@@ -14,7 +29,10 @@ enum CommandType
     Auto
 }
 
-export struct Command
+/++
+ + Command structure, defines information of a command
+ +/
+struct Command
 {
     export this(string fullCommand)
     {
@@ -29,7 +47,7 @@ export struct Command
 
         this.full = fullCommand;
         this.commandList = splitCommand(fullCommand);
-        string name = commandName(this);
+        string name = this.name;
         char startsOfCommandName = name.length == 0 ? 's' /* anything you want */  : name[0];
         if (startsOfCommandName == SystemCommandStartsWith)
         {
@@ -47,7 +65,7 @@ export struct Command
         }
     }
 
-    this(string fullOfCommand,
+    export this(string fullOfCommand,
         string[] commandListOfCommand,
         CommandType typeOfCommand)
     {
@@ -73,6 +91,26 @@ export struct Command
         }
         return "{" ~ "full: " ~ full ~ ", " ~ "commandList: " ~ commandList.to!string ~
             ", " ~ "type: " ~ typestr ~ "}";
+    }
+
+    /++ 
+     + Get the program name
+     + Returns: The program name, returns "" on failed
+     +/
+    @property
+    string name() const
+    {
+        return commandList.length > 0 ? commandList[0] : "";
+    }
+
+    /++ 
+     + Get the arguments
+     + Returns: The arguments
+     +/
+    @property
+    auto args() const
+    {
+        return commandList.length > 1 ? commandList[1 .. $] : [];
     }
 
     string full;
@@ -105,18 +143,6 @@ export struct Command
     }
 }
 
-@safe
-export pure nothrow string commandName(ref Command cmd)
-{
-    return cmd.commandList.length > 0 ? cmd.commandList[0] : "";
-}
-
-@safe
-export pure nothrow string[] commandArgs(ref Command cmd)
-{
-    return cmd.commandList.length > 1 ? cmd.commandList[1 .. $] : [];
-}
-
 @system @("command") unittest
 {
     auto c1 = Command(null);
@@ -124,11 +150,11 @@ export pure nothrow string[] commandArgs(ref Command cmd)
     auto c3 = Command("echo arg1 arg2");
     auto c4 = Command("#");
 
-    assert(commandName(c4) == "");
-    assert(commandName(c1) == "");
-    assert(commandName(c2) == "echo");
+    assert(c4.name == "");
+    assert(c1.name == "");
+    assert(c2.name == "echo");
 
-    assert(commandArgs(c4) == []);
-    assert(commandArgs(c1) == []);
-    assert(commandArgs(c3) == ["arg1", "arg2"]);
+    assert(c4.args == []);
+    assert(c1.args == []);
+    assert(c3.args == ["arg1", "arg2"]);
 }

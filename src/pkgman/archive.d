@@ -1,3 +1,9 @@
+/++
+ + Zip Archive Utilities
+ + Authors: ACoderOrHacker
+ + License: Apache-2.0 License
+ + Copyright: Copyright (C) 2025, ACoderOrHacker
+ +/
 module pkgman.archive;
 
 public import std.zip;
@@ -7,6 +13,9 @@ import std.path;
 import std.exception;
 import std.algorithm;
 
+/++ 
+ * Zip Archive Manager, based on std.zip
+ +/
 class ArchiveManager
 {
     private static void addMember(ZipArchive ar, string name, ubyte[] data)
@@ -20,6 +29,12 @@ class ArchiveManager
         ar.addMember(member);
     }
 
+    /++ 
+     + Archive a directory to a zip file
+     + Params:
+     +   dirPath = The directory to archive
+     +   zipFilePath = The zip file to write
+     +/
     static void archiveDir(string dirPath, string zipFilePath)
     {
         if (!(exists(dirPath) && isDir(dirPath)))
@@ -40,6 +55,12 @@ class ArchiveManager
         write(zipFilePath, archive.build());
     }
 
+    /++ 
+     + Unarchive a zip file to a directory
+     + Params:
+     +   zipFilePath = The zip file to read
+     +   destDir = The target directory
+     +/
     static void unarchive(string zipFilePath, string destDir)
     {
         if (!(exists(zipFilePath) && isFile(zipFilePath)))

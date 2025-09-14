@@ -1,3 +1,9 @@
+/++
+ + The configuration automatic reader & writer
+ + Authors: ACoderOrHacker
+ + License: Apache-2.0 License
+ + Copyright: Copyright (C) 2025, ACoderOrHacker
+ +/
 module shit.configs.configdef;
 @safe:
 export:
@@ -17,6 +23,12 @@ struct ConfigItemName
 
 // Codes
 
+/++ 
+ + Reads a file to the structure
+ + Params:
+ +   file = The file to read
+ +   data = The structure of data
+ +/
 void readConfig(C, Reader)(in string file, ref C data)
         if (is(C == struct) && is(Reader == class))
 {
@@ -43,6 +55,12 @@ void readConfig(C, Reader)(in string file, ref C data)
     }
 }
 
+/++ 
+ + Writes a data structure to a file
+ + Params:
+ +   file = The file path
+ +   data = The data structure
+ +/
 void writeConfig(C, Writer)(in string file, in C data)
 {
     Writer writer = new Writer(file);
@@ -70,6 +88,9 @@ void writeConfig(C, Writer)(in string file, in C data)
     writer.writeToFile();
 }
 
+/++ 
+ + Configuration class, auto read & write
+ +/
 class Config(C, string F, R, W)
 {
     static C data;
@@ -95,6 +116,11 @@ class Config(C, string F, R, W)
         }
     }
 
+    /++ 
+     + Auto-read the configuration
+     + Params:
+     +   baseDir = The directory of the file in
+     +/
     static void read(in string baseDir = ShitInformation.configPath)
     {
         try
@@ -112,6 +138,9 @@ class Config(C, string F, R, W)
         }
     }
 
+    /++ 
+     + Auto-write the configuration
+     +/
     static void write()
     {
         try
@@ -125,24 +154,43 @@ class Config(C, string F, R, W)
         }
     }
 
+    /++ 
+     + Get the exception when reading or writing
+     + Or get the reference of the exception
+     + Returns: The reference of the exception
+     +/
     @property
     static ref Exception exception()
     {
         return exception_;
     }
 
+    /++ 
+     + Get current base directory
+     + Returns: The base directory
+     +/
     @property
     static string baseDir()
     {
         return baseDir_;
     }
 
+    /++ 
+     + Checks if it has the exception
+     + Returns: Returns true if has an exception, or false
+     +/
     @property
     static bool hasException()
     {
         return exception_ !is null;
     }
 
+    /++ 
+     + Generate configuration file directory by given base directory
+     + Params:
+     +   baseDir = The base directory
+     + Returns: 
+     +/
     static string getConfigFile(string baseDir)
     {
         return buildPath(baseDir, F);

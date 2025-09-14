@@ -93,12 +93,12 @@ export ExecuteResult executeProcess(Command cmd,
     File err = stderr, File output = stdout)
 {
     scope (failure)
-        throw new ExecuteException(commandName(cmd) ~ ": command not found");
+        throw new ExecuteException(cmd.name ~ ": command not found");
 
     if (cmd.commandList.length == 0)
         return ExecuteResult(0);
 
-    string tmp = findProgram(cmd.commandList[0]);
+    string tmp = findProgram(cmd.name);
     if (tmp !is null)
         cmd.commandList[0] = tmp;
 
@@ -110,7 +110,7 @@ export ExecuteResult executeProcess(Command cmd,
 export ExecuteResult executeNonSystem(Command cmd)
 {
     auto builtins = getBuiltinCommands();
-    string prog = commandName(cmd);
+    string prog = cmd.name;
     if (prog !in builtins)
         throw new RegisteredCommandNotFoundException("command `" ~ prog ~ "` not found");
 
@@ -130,7 +130,7 @@ export ExecuteResult executeCommand(Command command)
     else
     {
         // Auto type
-        if (commandName(command) in getBuiltinCommands())
+        if (command.name in getBuiltinCommands())
         {
             return executeNonSystem(command);
         }
@@ -155,7 +155,7 @@ export bool isValidInSystem(string cmd)
 
 export bool isValidCommand(Command cmd)
 {
-    string prog = commandName(cmd);
+    string prog = cmd.name;
 
     final switch (cmd.type)
     {
