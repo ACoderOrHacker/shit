@@ -30,6 +30,7 @@ add_installfiles("etc/shit/(**.json)", {prefixdir = "etc/shit"})
 
 add_requires("lua 5.4.7", {alias = "lua54", configs = {shared = false}})
 add_requires("libcurl", {configs = {shared = false}})
+add_requires("dub::pegged")
 
 set_configdir("$(projectdir)/src/")
 add_configfiles("src/config.d.in")
@@ -40,7 +41,7 @@ target("shit")
     set_kind("binary")
 
     add_files("src/**.d")
-    add_packages("lua54", "libcurl")
+    add_packages("lua54", "libcurl", "dub::pegged")
 target_end()
 
 xpack("shit")
