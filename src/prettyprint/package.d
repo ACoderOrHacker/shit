@@ -46,22 +46,64 @@ import std.traits;
 import std.array;
 import std.stdio;
 import std.string;
+import std.exception;
+import std.conv;
 
 // ADTs
 enum NonPrintable;
 enum Printable;
+
+alias PPrintFunction = void function(void *, string, string);
 
 void pprint(A)(A arg, size_t tabSize = 4) @trusted
 {
     pprintImpl(arg, " ".replicate(tabSize), "");
 }
 
-private template isStructOrClass(T)
+class PPrintException : Exception
 {
-    enum isStructOrClass = is(T == struct) || is(T == class);
+    this(string msg, string file = __FILE__, size_t line = __LINE__, Throwable nextInChain = null) pure nothrow @nogc @safe
+    {
+        super(msg, file, line, nextInChain);
+    }
 }
 
-private template PrintableFieldNames(T) {
+struct TypeRegistry
+{
+    static PPrintFunction[TypeInfo] typeNames;
+
+    static void register(T)()
+    {
+        pragma(msg, T.stringof);
+        static void wrapper(void *data, string tabText, string beforeText)
+        {
+            pprintImpl!T(*cast(T *)data, tabText, beforeText);
+        }
+
+        typeNames[typeid(T)] = &wrapper;
+    }
+
+    static PPrintFunction getFunction(TypeInfo info)
+    {
+        return typeNames.get(info, null);
+    }
+}
+
+private template isUserDefined(string member)
+{
+    enum bool isUserDefined =
+        !(member.length >= 2 && member[0 .. 2] == "__") &&
+        member != "Monitor" &&
+        member != "factory";
+}
+
+private template UserDefinedMembers(T)
+{
+    alias UserDefinedMembers = Filter!(isUserDefined, __traits(allMembers, T));
+}
+
+private template PrintableFieldNames(T)
+{
     template isPrintable(alias memberName)
     {
         alias member = __traits(getMember, T, memberName);
@@ -75,7 +117,7 @@ private template PrintableFieldNames(T) {
             enum hasNonPrintable = hasUDA!(member, NonPrintable);
             enum hasPrintable = hasUDA!(member, Printable);
 
-            static assert(!(hasNonPrintable && hasPrintable), 
+            static assert(!(hasNonPrintable && hasPrintable),
                 "property `" ~ T.stringof ~ "." ~ memberName ~ "` has both NonPrintable and Printable attributes");
 
             static if (hasNonPrintable)
@@ -92,7 +134,31 @@ private template PrintableFieldNames(T) {
             }
         }
     }
-    alias PrintableFieldNames = Filter!(isPrintable, __traits(allMembers, T));
+
+    alias PrintableFieldNames = Filter!(isPrintable, UserDefinedMembers!T);
+}
+
+private struct NoDirectParent {}
+
+private template DirectParentClass(T)
+{
+    static if (!is(T == class))
+    {
+        alias DirectParentClass = NoDirectParent;
+    }
+    else
+    {
+        alias BaseClasses = BaseClassesTuple!T;
+
+        static if (BaseClasses.length > 1)
+        {
+            alias DirectParentClass = BaseClasses[0];
+        }
+        else
+        {
+            alias DirectParentClass = NoDirectParent;
+        }
+    }
 }
 
 private string getClassRuntimeTypeidWithoutModule(T)(T obj)
@@ -104,7 +170,7 @@ private string getClassRuntimeTypeidWithoutModule(T)(T obj)
 }
 
 private void pprintImpl(T)(T object, string, string)
-    if (isBasicType!T || isSomeString!T)
+        if (isBasicType!T || isSomeString!T)
 {
     static if (isSomeString!T)
     {
@@ -117,7 +183,7 @@ private void pprintImpl(T)(T object, string, string)
 }
 
 private void pprintImpl(T)(T object, string tabText, string beforeText)
-    if ((isArray!T || isAssociativeArray!T) && !isSomeString!T)
+        if ((isArray!T || isAssociativeArray!T) && !isSomeString!T)
 {
     writeln("[");
     string elemBeforeText = beforeText ~ tabText;
@@ -132,16 +198,55 @@ private void pprintImpl(T)(T object, string tabText, string beforeText)
     writeln(beforeText, "]");
 }
 
-private void pprintImpl(T)(T object, string tabText, string beforeText)
-    if (isStructOrClass!T)
+private void pprintImpl(T, bool checkPolymorphic = true)(T object, string tabText, string beforeText, 
+    string className = null)
+        if (is(T == struct) || is(T == class))
 {
+    if (className == null)
+    {
+        className = getClassRuntimeTypeidWithoutModule(object);
+    }
+    static if (checkPolymorphic && is(T == class))
+    {
+        // maybe polymorphic object
+        auto id = typeid(object);
+        if (id != typeid(T))
+        {
+            auto func = TypeRegistry.getFunction(id);
+            enforce(func != null, new PPrintException("Unregistered polymorphic object"));
+
+            func(cast(void *)&object, tabText, beforeText);
+            return;
+        }
+    }
     string beforeElemText = beforeText ~ tabText;
-    writeln(getClassRuntimeTypeidWithoutModule(object), "(");
-    foreach (name; PrintableFieldNames!T)
+    write(className, "(");
+
+    void printItem(T)(T object, string name, string className = null)
     {
         write(beforeText, tabText, name, " = ");
-        pprintImpl(mixin("object." ~ name), tabText, beforeElemText);
-        writeln();
+        pprintImpl!(T, false)(object, tabText, beforeElemText, 
+            className);
     }
-    writeln(beforeText, ")");
+
+    alias Fields = PrintableFieldNames!T;
+    alias Parent = DirectParentClass!T;
+
+    static if (Parent.stringof != "NoDirectParent")
+    {
+        // has parent class
+        writeln();
+        printItem(mixin("object." ~ Parent.stringof), "super", Parent.stringof);
+    }
+    static foreach (i, name; Fields)
+    {
+        writeln();
+        printItem(mixin("object." ~ name), name);
+    }
+
+    static if (Fields.length > 0)
+    {
+        write(beforeText);
+    }
+    writeln(")");
 }
