@@ -202,12 +202,6 @@ int replMain(bool loadingPackage, YNResult cliOption)
 
 int cliDMain(string[] args)
 {
-    import sl.ast;
-    import sl.gram;
-    import std.traits;
-    import prettyprint;
-
-    pprint(cast(ASTNode) new StmtASTNode);
     checkAndInit();
 
     try
