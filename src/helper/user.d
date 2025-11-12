@@ -50,7 +50,7 @@ string getHostName() @trusted
  + Checks if the current user is an administrator
  + Returns: If yes, then it's an administrator, or false
  +/
-bool isAdmin()
+bool isAdmin() @trusted
 {
     version (Windows)
     {

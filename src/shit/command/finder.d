@@ -45,7 +45,7 @@ private bool isExecutable(string path) @trusted
     }
 }
 
-version (Windows) private string findFromAppPath(string programName)
+version (Windows) private string findFromAppPath(string programName) @trusted
 {
     string regName = baseName(programName);
     if (!regName.endsWith(".exe"))

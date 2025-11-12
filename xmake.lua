@@ -28,7 +28,7 @@ end
 
 add_installfiles("etc/shit/(**.json)", {prefixdir = "etc/shit"})
 
-add_requires("lua 5.4.7", {alias = "lua54", configs = {shared = false}})
+add_requires("lua 5.4.7", {alias = "lua54", configs = {shared = true}})
 add_requires("libcurl", {configs = {shared = false}})
 add_requires("dub::pegged")
 

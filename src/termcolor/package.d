@@ -25,7 +25,7 @@ else
 }
 
 /// Checks if the file descriptor referring to a tty
-private bool isatty(File stream)
+private bool isatty(File stream) @trusted
 {
     version (Posix)
     {
@@ -192,7 +192,7 @@ version (Windows)
     }
 }
 
-private bool detectRGB(File stream)
+private bool detectRGB(File stream) @trusted
 {
     version (Windows)
     {
@@ -217,7 +217,7 @@ private void setColorByANSI(File stream, RGBColor c, bool isBackground)
     stream.write(mode, c.r, ";", c.g, ";", c.b, "m");
 }
 
-private void setColorByAPI(File stream, Legacy16Color c)
+private void setColorByAPI(File stream, Legacy16Color c) @trusted
 {
     version (Posix)
     {

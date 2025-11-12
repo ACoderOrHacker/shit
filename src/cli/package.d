@@ -202,6 +202,12 @@ int replMain(bool loadingPackage, YNResult cliOption)
 
 int cliDMain(string[] args)
 {
+    import sl.ast;
+    import sl.gram;
+    import std.traits;
+    import prettyprint;
+
+    pprint(cast(ASTNode) new StmtASTNode);
     checkAndInit();
 
     try
@@ -248,7 +254,7 @@ int cliDMain(string[] args)
 
             writeln();
             writeln();
-            
+
             exit(0);
         }
 
@@ -324,7 +330,8 @@ int cliDMain(string[] args)
 
         void disableHandler(string option, string pkgname)
         {
-            if (pkgconfig.enabledPackages.length == 0 || pkgconfig.enabledPackages.find(pkgname).empty)
+            if (pkgconfig.enabledPackages.length == 0 || pkgconfig.enabledPackages.find(pkgname)
+                .empty)
             {
                 log("warning: `" ~ pkgname ~ "` is not in `enabled-packages`");
             }
@@ -435,7 +442,7 @@ int cliDMain(string[] args)
     return 0;
 }
 
-extern (C) int cliCMain(int argc, const(char) **argv)
+extern (C) int cliCMain(int argc, const(char)** argv)
 {
     return cliDMain(convertToStringArray(argv, argc));
 }

@@ -35,7 +35,7 @@ string getHome() @trusted
     version (Windows)
     {
         import core.sys.windows.shlobj;
-        import core.sys.windows;
+        import core.sys.windows.windows;
         import core.stdc.wchar_;
 
         wchar_t[260] path;

@@ -7,7 +7,6 @@
 module sl.ast;
 
 import prettyprint;
-public import std.bigint;
 
 alias Identifier = string; // identifer string type
 
@@ -21,38 +20,41 @@ private template initASTNode()
 
 class ASTNode
 {
-    void codegen() {}
+    void codegen()
+    {
+    }
 }
 
 class StmtASTNode : ASTNode
 {
-    //mixin initASTNode;
-    static this()
-    {
-        TypeRegistry.register!(StmtASTNode)();
-    }
+    mixin initASTNode;
 }
 
 class ExprASTNode : ASTNode
 {
+    mixin initASTNode;
 }
 
 class ProgramASTNode : BlockASTNode
 {
+    mixin initASTNode;
 }
 
 class BlockASTNode : StmtASTNode
 {
+    mixin initASTNode;
     StmtASTNode[] stmts;
 }
 
 class ReturnASTNode : StmtASTNode
 {
+    mixin initASTNode;
     ExprASTNode returnValue;
 }
 
 class FunctionDeclASTNode : StmtASTNode
 {
+    mixin initASTNode;
     Identifier id;
     BlockASTNode block;
     Identifier params;
@@ -63,12 +65,14 @@ class FunctionDeclASTNode : StmtASTNode
 
 class ForInStmtASTNode : StmtASTNode
 {
+    mixin initASTNode;
     Identifier[] loopVariables;
     ExprASTNode container;
 }
 
 class SwitchStmtASTNode : StmtASTNode
 {
+    mixin initASTNode;
     ExprASTNode controlExpr;
 
     CaseASTNode[] cases;
@@ -77,17 +81,20 @@ class SwitchStmtASTNode : StmtASTNode
 
 class CaseASTNode : ASTNode
 {
+    mixin initASTNode;
     ExprASTNode constantExpr;
+    BlockASTNode block;
+}
+
+struct ConditionClause
+{
+    ExprASTNode condition;
     BlockASTNode block;
 }
 
 class IfStmtASTNode : StmtASTNode
 {
-    struct ConditionClause
-    {
-        ExprASTNode condition;
-        BlockASTNode block;
-    }
+    mixin initASTNode;
 
     ConditionClause[] clauses;
     BlockASTNode elseClause;
@@ -95,65 +102,77 @@ class IfStmtASTNode : StmtASTNode
 
 class WhileStmtASTNode : StmtASTNode
 {
+    mixin initASTNode;
     ExprASTNode condition;
     BlockASTNode block;
 }
 
 class DoWhileStmtASTNode : StmtASTNode
 {
+    mixin initASTNode;
     ExprASTNode condition;
     BlockASTNode block;
 }
 
 class VarDeclASTNode : StmtASTNode
 {
+    mixin initASTNode;
     Identifier[] vars;
     ExprASTNode[] exprs;
 }
 
+struct KeyAndValue
+{
+    ExprASTNode key;
+    ExprASTNode value;
+}
+
 class TableConstructorASTNode : ExprASTNode
 {
-    struct KeyAndValue
-    {
-        ExprASTNode key;
-        ExprASTNode value;
-    }
+    mixin initASTNode;
 
     KeyAndValue[] keyAndValues;
 }
 
 class FunctionCallASTNode : ExprASTNode
 {
+    mixin initASTNode;
     ExprASTNode[] args;
     Identifier returnType;
 }
 
 class IntegerLiteralASTNode : ExprASTNode
 {
-    BigInt integerData;
+    mixin initASTNode;
+    long integerData;
 }
 
 class FloatLiteralASTNode : ExprASTNode
 {
+    mixin initASTNode;
     double floatNumber; // TODO: Use decimal type
 }
 
 class StringLiteralASTNode : ExprASTNode
 {
+    mixin initASTNode;
     string stringData;
 }
 
 class BooleanLiteralASTNode : ExprASTNode
 {
+    mixin initASTNode;
     bool booleanValue;
 }
 
 class NilASTNode : ExprASTNode
 {
+    mixin initASTNode;
 }
 
 class BinaryExprASTNode : ExprASTNode
 {
+    mixin initASTNode;
     enum OpType
     {
         Add,
@@ -183,6 +202,7 @@ class BinaryExprASTNode : ExprASTNode
 
 class UnaryExprASTNode : ExprASTNode
 {
+    mixin initASTNode;
     enum OpType
     {
         Not,
@@ -196,13 +216,16 @@ class UnaryExprASTNode : ExprASTNode
 
 class PipelineExprASTNode : ExprASTNode
 {
+    mixin initASTNode;
     string cmd; // TODO: One more thing...
 }
 
 class BreakASTNode : StmtASTNode
 {
+    mixin initASTNode;
 }
 
 class ContinueASTNode : StmtASTNode
 {
+    mixin initASTNode;
 }
