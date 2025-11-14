@@ -10,6 +10,7 @@ export:
 
 import std.file;
 import std.path;
+import std.array;
 import std.algorithm;
 import std.string;
 import std.process : environment;
@@ -35,7 +36,7 @@ private bool isExecutable(string path) @trusted
 
     version (Windows)
     {
-        string ext = std.path.extension(path).toLower();
+        string ext = std.path.extension(path);
         string[] validExts = split(environment.get("PATHEXT", ".EXE;.CMD;.BAT;.COM"), ";");
         return validExts.canFind(ext.toUpper);
     }
@@ -92,11 +93,8 @@ version (Windows) private string findFromAppPath(string programName) @trusted
  +/
 string findProgram(string programName)
 {
-    // absolute path
-    if (programName.canFind('\\') || programName.canFind('/'))
-    {
-        return isExecutable(programName) ? programName : null;
-    }
+    programName = asAbsolutePath(programName).array;
+    if (isExecutable(programName)) return programName;
 
     version (Windows)
     {
@@ -104,11 +102,6 @@ string findProgram(string programName)
         if (appPathResult !is null)
             return appPathResult;
     }
-
-    // find in current directory
-    string currentDir = buildPath(getcwd(), programName);
-    if (isExecutable(currentDir))
-        return currentDir;
 
     // find in PATH
     string pathEnv = environment.get("PATH", "");
