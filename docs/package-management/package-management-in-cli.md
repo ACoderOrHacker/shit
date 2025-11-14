@@ -6,6 +6,10 @@ editLink: true
 
 # Package Management in CLI
 
+:::warning WARNING
+`shit` in windows needs administrator to run so that can do things about packages
+:::
+
 `Shit`'s package management is `powerful`.
 You can install/uninstall external package easily by `shit` cli
 

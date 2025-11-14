@@ -393,11 +393,11 @@ int cliDMain(string[] args)
             std.getopt.config.bundling,
 
             "type|t", "the type to create default package", &defaultPackageType,
-            "loading-packages", &loadingPackage,
+            "loading-packages", "flag to determine whether the package is enabled (default to true)", &loadingPackage,
             "yes|y", "set yes to questions", &yesHandler,
             "no|n", "set no to questions", &noHandler,
 
-            "version", "get version", &versionHandler,
+            "version|v", "get version", &versionHandler,
             "repl|r", "run repl shell", &replHandler,
             "execute|e", "execute a command", &executeHandler,
             "install|i", "install a package", &installHandler,
