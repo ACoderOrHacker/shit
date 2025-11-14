@@ -203,6 +203,7 @@ int replMain(bool loadingPackage, YNResult cliOption)
 int cliDMain(string[] args)
 {
     checkAndInit();
+    consoleInit();
 
     try
     {
