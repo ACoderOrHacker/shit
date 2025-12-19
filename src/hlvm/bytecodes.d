@@ -12,7 +12,7 @@ import core.stdc.stdint;
  + iABC:  |    A(8)    |    B(8)    |      C(8)      |        Opcode(8)        |
  + iAx:   |                    Ax(24)                |        Opcode(8)        |
  + isAx:  |                sAx(24)(signed)           |        Opcode(8)        |
- + iAsJ:  |        A(8)         |       sJ(16)       |        Opcode(8)        |
+ + iAsB:  |        A(8)         |       sB(16)       |        Opcode(8)        |
  +
  + In following comments, these means:
  + S(top): the top of stack
@@ -61,8 +61,8 @@ enum Opcode : uint8_t
 
     // Jumping & Function
     JMP, //            isAx;  pc += sJ
-    JNT, //            iAsJ;  if not R(A) then pc += sJ
-    JNF, //            iAsJ;  if R(A) then pc += sJ
+    JNT, //            iAsB;  if not R(A) then pc += sJ
+    JNF, //            iAsB;  if R(A) then pc += sJ
     CALL, //           iAB;   R(A)(SP(0), ..., SP(B))
     RET1, //           isAx;  if sAx < 0 then return else return R((Ax)sAx)
     RET, //            iAB;   return R(A), ..., R(A + B - 2)
@@ -76,83 +76,63 @@ enum Opcode : uint8_t
     EXT_2, //          iAx;  Ext(1) = R(Ax)
 }
 
-struct ArgumentAB
-{
-    uint16_t A;
-    uint8_t B;
-}
-
-struct ArgumentABC
-{
-    uint8_t A;
-    uint8_t B;
-    uint8_t C;
-}
-
-struct ArgumentAsJ
-{
-    uint8_t A;
-    int16_t sJ;
-}
-
 struct Bytecode
 {
-    private
+    union
     {
+        uint32_t originValue_;
         struct BytecodeData
         {
-            Opcode opcode;
-            union
-            {
-                ArgumentAB argAB_;
-                ArgumentABC argABC_;
-                ArgumentAsJ argAsJ_;
-            }
+            mixin(bitfields!(
+                    Opcode, "opcode", 8,
+                    uint32_t, "operand", 24
+            ));
         }
 
-        union
+        struct BytecodeAx
         {
-            BytecodeData data;
             mixin(bitfields!(
-                    Opcode, "opcodeBits", 8,
-                    uint32_t, "oprandBits", 24
+                    Opcode, "opcodeAx", 8,
+                    uint32_t, "operandAx", 24
+            ));
+        }
+
+        struct BytecodeAB
+        {
+            mixin(bitfields!(
+                    Opcode, "opcodeAB", 8,
+                    uint16_t, "operandA", 16,
+                    uint8_t, "operandB", 8
+            ));
+        }
+
+        struct BytecodeABC
+        {
+            mixin(bitfields!(
+                    Opcode, "opcodeABC", 8,
+                    uint8_t, "operandA", 8,
+                    uint8_t, "operandB", 8,
+                    uint8_t, "operandC", 8
+            ));
+        }
+
+        struct BytecodeSAx
+        {
+            mixin(bitfields!(
+                    Opcode, "opcodeSAx", 8,
+                    uint32_t, "operandSAx", 24
+            ));
+        }
+
+        struct BytecodeAsB
+        {
+            mixin(bitfields!(
+                    Opcode, "opcodeAsB", 8,
+                    uint8_t, "operandA", 8,
+                    uint16_t, "operandSB", 16
             ));
         }
     }
-
-    @property
-    Opcode opcode()
-    {
-        return opcodeBits;
-    }
-
-    @property
-    ArgumentAB argAB()
-    {
-        return data.argAB_;
-    }
-
-    @property
-    ArgumentABC argABC()
-    {
-        return data.argABC_;
-    }
-
-    @property
-    uint32_t argAx()
-    {
-        return oprandBits;
-    }
-
-    @property
-    int32_t argSAx()
-    {
-        return cast(int32_t) oprandBits;
-    }
-
-    @property
-    ArgumentAsJ argAsJ()
-    {
-        return data.argAsJ_;
-    }
 }
+
+alias Bytecodes = Bytecode[];
