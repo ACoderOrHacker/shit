@@ -1,7 +1,14 @@
+/++
+ + HLVM Bytecodes
+ + Authors: ACoderOrHacker
+ + License: Apache-2.0 License
+ + Copyright: Copyright (C) 2025, ACoderOrHacker
+ +/
 module hlvm.bytecodes;
 
 import std.bitmanip;
 import core.stdc.stdint;
+import hlvm.base.array;
 
 /++ 
  + Opcodes
@@ -76,63 +83,76 @@ enum Opcode : uint8_t
     EXT_2, //          iAx;  Ext(1) = R(Ax)
 }
 
+struct BytecodeData
+{
+    mixin(bitfields!(
+            Opcode, "opcode", 8,
+            uint32_t, "operand", 24
+    ));
+}
+
+struct BytecodeAx
+{
+    mixin(bitfields!(
+            Opcode, "opcodeAx", 8,
+            uint32_t, "operandAx", 24
+    ));
+}
+
+struct BytecodeAB
+{
+    mixin(bitfields!(
+            Opcode, "opcodeAB", 8,
+            uint16_t, "operandA", 16,
+            uint8_t, "operandB", 8
+    ));
+}
+
+struct BytecodeABC
+{
+    mixin(bitfields!(
+            Opcode, "opcodeABC", 8,
+            uint8_t, "operandA", 8,
+            uint8_t, "operandB", 8,
+            uint8_t, "operandC", 8
+    ));
+}
+
+struct BytecodeSAx
+{
+    mixin(bitfields!(
+            Opcode, "opcodeSAx", 8,
+            uint32_t, "operandSAx", 24
+    ));
+}
+
+struct BytecodeAsB
+{
+    mixin(bitfields!(
+            Opcode, "opcodeAsB", 8,
+            uint8_t, "operandA", 8,
+            uint16_t, "operandSB", 16
+    ));
+}
+
 struct Bytecode
 {
     union
     {
         uint32_t originValue_;
-        struct BytecodeData
-        {
-            mixin(bitfields!(
-                    Opcode, "opcode", 8,
-                    uint32_t, "operand", 24
-            ));
-        }
+        BytecodeData bytecodeData;
+        BytecodeAB bytecodeAB;
+        BytecodeABC bytecodeABC;
+        BytecodeAsB bytecodeAsB;
+        BytecodeAx bytecodeAx;
+        BytecodeSAx bytecodeSAx;
+    }
 
-        struct BytecodeAx
-        {
-            mixin(bitfields!(
-                    Opcode, "opcodeAx", 8,
-                    uint32_t, "operandAx", 24
-            ));
-        }
-
-        struct BytecodeAB
-        {
-            mixin(bitfields!(
-                    Opcode, "opcodeAB", 8,
-                    uint16_t, "operandA", 16,
-                    uint8_t, "operandB", 8
-            ));
-        }
-
-        struct BytecodeABC
-        {
-            mixin(bitfields!(
-                    Opcode, "opcodeABC", 8,
-                    uint8_t, "operandA", 8,
-                    uint8_t, "operandB", 8,
-                    uint8_t, "operandC", 8
-            ));
-        }
-
-        struct BytecodeSAx
-        {
-            mixin(bitfields!(
-                    Opcode, "opcodeSAx", 8,
-                    uint32_t, "operandSAx", 24
-            ));
-        }
-
-        struct BytecodeAsB
-        {
-            mixin(bitfields!(
-                    Opcode, "opcodeAsB", 8,
-                    uint8_t, "operandA", 8,
-                    uint16_t, "operandSB", 16
-            ));
-        }
+    @property
+    Opcode opcode()
+    {
+        return bytecodeData.opcode;
     }
 }
 
-alias Bytecodes = Bytecode[];
+alias Bytecodes = HLVMArray!Bytecode;
