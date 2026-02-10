@@ -2,7 +2,14 @@
 
 set -e
 
-npm run docs:build
+# Check for npx
+npx --version
+if [$? -ne 0]; then
+    echo "error: npx not found"
+    exit 1
+fi
+
+npx vitepress build
 
 cd docs/.vitepress/dist
 rm -rf .git

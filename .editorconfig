@@ -1,0 +1,47 @@
+#! EditorConfig file
+#! By ACoderOrHacker
+
+root = true
+
+# All source files
+[*]
+end_of_line = lf
+insert_final_newline = true
+charset = utf-8
+indent_style = space
+indent_size = 4
+max_line_length = 120
+trim_trailing_whitespace = true
+
+# Dlang source files
+# Using dfmt
+# See https://github.com/dlang-community/dfmt
+[*.d]
+dfmt_align_switch_statements = true
+dfmt_split_operator_at_line_end = true
+dfmt_space_after_keywords = true
+dfmt_space_after_cast = true
+dfmt_space_before_function_parameters = true
+dfmt_selective_import_space = true
+dfmt_space_before_aa_colon = true
+dfmt_template_constraint_style = always_newline_indent
+dfmt_single_template_constraint_indent = true
+dfmt_compact_labeled_statements = true
+dfmt_space_before_named_arg_colon = true
+dfmt_keep_line_breaks = false
+dfmt_single_indent = true
+dfmt_reflow_property_chains = true
+
+# npm/pnpm files
+[package.json]
+indent_style = space
+indent_size = 2
+
+# CI/CD files
+[.travis.yml]
+indent_style = space
+indent_size = 2
+
+[.github/*.yml]
+indent_style = space
+indent_size = 2

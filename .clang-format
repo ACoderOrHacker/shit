@@ -1,9 +1,0 @@
-BasedOnStyle: Google
-Language: Cpp
-
-IndentWidth: 4
-AccessModifierOffset: -4
-BreakBeforeBraces: Attach
-Cpp11BracedListStyle: true
-PointerAlignment: Right
-Sort    import: false
