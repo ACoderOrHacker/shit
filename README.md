@@ -1,5 +1,8 @@
 # The SHIT terminal
 
+>[!NOTE]
+> Right now, shit is temporarily not being maintained, but it will restart after [OE](https://github.com/ACoderOrHacker/OE) is finished.
+
 [![Build](https://github.com/ACoderOrHacker/shit/actions/workflows/ci.yml/badge.svg)](https://github.com/ACoderOrHacker/shit/actions/workflows/ci.yml)
 
 A powerful and modern terminal written in [D Programming Language](https://dlang.org/).
